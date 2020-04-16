@@ -1,0 +1,71 @@
+---
+title: "Simple skeleton simulation"
+author: "Martin Johnsson"
+output: html_document
+---
+
+Simple simulation with these features:
+
+* Discrete generations
+
+* 3000 females, 200 males used each generation
+
+* 6000 matings = 6000 individuals per generation
+
+* Selection only on the male side
+
+* One fully recessive lethal ~ 5% starting frequency
+
+* No carrier x carrier matings
+
+## Housekeeping
+
+Load packages and simulation results
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = normalizePath(".."))
+```
+
+```{r}
+library(AlphaSimR)
+library(ggplot2)
+```
+
+```{r}
+simulation_results <- readRDS("simulations/simple_simulations/results.Rds")
+```
+
+Generation counter
+
+```{r}
+generations <- 1:40
+```
+
+
+## Basic features of the simulation
+
+Genetic trend
+
+```{r}
+mean_g <- unlist(lapply(simulation_results$generations, meanG))
+qplot(x = generations, y = mean_g)
+```
+
+Genetic variance
+
+```{r}
+var_g <- unlist(lapply(simulation_results$generations, varG))
+qplot(x = generations, y = var_g)
+```
+
+Frequency of carriers
+
+```{r}
+carriers <- unlist(lapply(simulation_results$carrier_status,
+                          function (x) sum(x > 0)))
+qplot(x = generations, y = carriers/3200)
+```
+
+
+

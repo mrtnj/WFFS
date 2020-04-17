@@ -10,13 +10,13 @@ Simple simulation with these features:
 
 * 3000 females, 200 males used each generation
 
-* 6000 matings = 6000 individuals per generation
-
 * Selection only on the male side
+
+* 6000 matings with equal sex ratio => 200 out of 3000 (3.3% of males used)
 
 * One fully recessive lethal ~ 5% starting frequency
 
-* No carrier x carrier matings
+* No carrier x carrier matings; carrier x noncarrier matings allowed
 
 ## Housekeeping
 
@@ -29,7 +29,9 @@ knitr::opts_knit$set(root.dir = normalizePath(".."))
 
 ```{r}
 library(AlphaSimR)
+library(dplyr)
 library(ggplot2)
+library(tidyr)
 ```
 
 ```{r}
@@ -49,23 +51,91 @@ Genetic trend
 
 ```{r}
 mean_g <- unlist(lapply(simulation_results$generations, meanG))
-qplot(x = generations, y = mean_g)
+qplot(x = generations,
+      y = mean_g,
+      xlab = "Generation",
+      ylab = "Mean genetic value",
+      main = "Genetic trend")
 ```
 
 Genetic variance
 
 ```{r}
 var_g <- unlist(lapply(simulation_results$generations, varG))
-qplot(x = generations, y = var_g)
+qplot(x = generations,
+      y = var_g,
+      xlab = "Generation",
+      ylab = "Genetic variance",
+      main = "Genetic variance trend")
 ```
 
-Frequency of carriers
+## Allele frequency changes
+
+Lethal allele frequency
 
 ```{r}
 carriers <- unlist(lapply(simulation_results$carrier_status,
                           function (x) sum(x > 0)))
-qplot(x = generations, y = carriers/3200)
+carriers_df <- data.frame(generations = generations,
+                          carriers = carriers)
+qplot(x = generations,
+      y = carriers/6400,
+      data = carriers_df,
+      xlab = "Generation",
+      ylab = "Lethal allele frequency")
 ```
 
 
+Frequencies of neutral variants
+
+```{r}
+counts <- lapply(simulation_results$generations,
+                     function(gen) {
+                          snps <- pullSnpGeno(gen,
+                                              simParam = simulation_results$simparam)
+                          snps <- snps[, simulation_results$other_snp_ix]
+                          colSums(snps)
+                      })
+counts_df <- as.data.frame(Reduce(rbind, counts))
+counts_df$generation <- 1:40
+counts_long <- pivot_longer(counts_df,
+                            -generation)
+qplot(x = generation,
+      y = value/6400,
+      group = name,
+      data = counts_long,
+      geom = "line",
+      xlab = "Generation",
+      ylab = "Allele frequency",
+      main = "Allele frequency of neutral alleles with ~ 5% starting frequency")
+```
+
+Allele frequency summary
+
+```{r}
+freq_summaries <- summarise(group_by(counts_long, generation),
+                            mean = mean(value/6400),
+                            lower = mean - 2 * sd(value/6400),
+                            upper = mean - 2 * sd(value/6400))
+```
+
+
+Combined plot
+
+```{r}
+
+ggplot() +
+    geom_line(aes(x = generation,
+                  y = value/6400,
+                  group = name),
+              data = counts_long,
+              colour = "grey") +
+    geom_line(aes(x = generations,
+                  y = carriers/6400),
+              data = carriers_df,
+              colour = "blue") +
+    xlab("Generations") +
+    ylab("Allele frequency") +
+    ggtitle("Allele frequency of lethal (blue) and neutral alleles (grey)")
+```
 

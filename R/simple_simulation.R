@@ -26,7 +26,7 @@ simparam$setGender("yes_sys")
 simparam$addTraitA(nQtlPerChr = 100)
 simparam$setVarE(h2 = 0.4)
 
-simparam$addSnpChip(nSnpPerChr = 10)
+simparam$addSnpChip(nSnpPerChr = 900)
 
 founders <- newPop(founderpop,
                    simParam = simparam)
@@ -44,6 +44,7 @@ if (length(candidates) < 1) {
 }
 
 lethal_ix <- sample(candidates, 1)
+other_snp_ix <- setdiff(candidates, lethal_ix)
 
 
 ## Carrier test function
@@ -113,4 +114,18 @@ for (gen_ix in 2:n_gen) {
         generations[[gen_ix]] <- noncarrier_dam_x_any_sire
     }
 }
+
+
+## Create simulation object
+
+simulation_results <- list(generations = generations,
+                           carrier_status = lapply(generations,
+                                                   carrier_test,
+                                                   lethal_ix = lethal_ix),
+                           simparam = simparam,
+                           lethal_ix = lethal_ix,
+                           other_snp_ix = other_snp_ix)
+
+saveRDS(simulation_results, 
+        file = "simulations/simple_simulations/results.Rds")
 

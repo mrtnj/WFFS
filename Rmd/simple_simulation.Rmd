@@ -31,11 +31,18 @@ knitr::opts_knit$set(root.dir = normalizePath(".."))
 library(AlphaSimR)
 library(dplyr)
 library(ggplot2)
+library(purrr)
 library(tidyr)
 ```
 
 ```{r}
-simulation_results <- readRDS("simulations/simple_simulations/results.Rds")
+##simulation_results <- readRDS("simulations/simple_simulations/results_2.Rds")
+simulation_results <- lapply(paste("simulations/simple_simulations/results_",
+                                   1:10,
+                                   ".Rds",
+                                   sep = ""),
+                             readRDS)
+names(simulation_results) <- 1:10
 ```
 
 Generation counter
@@ -50,9 +57,17 @@ generations <- 1:40
 Genetic trend
 
 ```{r}
-mean_g <- unlist(lapply(simulation_results$generations, meanG))
-qplot(x = generations,
+get_stats <- function(results) data.frame(generation = generations,
+                                           mean_g = unlist(lapply(results$generations, meanG)),
+                                           var_g = unlist(lapply(results$generations, varG)),
+                                           stringsAsFactors = FALSE)
+stats <- map_df(simulation_results, get_stats)
+stats$replicate <- rep(1:10, each = length(generations))
+
+qplot(x = generation,
       y = mean_g,
+      colour = replicate,
+      data = stats,
       xlab = "Generation",
       ylab = "Mean genetic value",
       main = "Genetic trend")
@@ -61,9 +76,10 @@ qplot(x = generations,
 Genetic variance
 
 ```{r}
-var_g <- unlist(lapply(simulation_results$generations, varG))
-qplot(x = generations,
+qplot(x = generation,
       y = var_g,
+      data = stats,
+      colour = replicate,
       xlab = "Generation",
       ylab = "Genetic variance",
       main = "Genetic variance trend")
@@ -74,13 +90,20 @@ qplot(x = generations,
 Lethal allele frequency
 
 ```{r}
-carriers <- unlist(lapply(simulation_results$carrier_status,
-                          function (x) sum(x > 0)))
-carriers_df <- data.frame(generations = generations,
-                          carriers = carriers)
-qplot(x = generations,
+get_carriers <- function(results) {
+    carriers <- unlist(lapply(results$carrier_status,
+                  function (x) sum(x > 0)))
+    data.frame(generation = generations,
+               carriers = carriers)
+}
+
+carriers <- map_dfr(simulation_results, get_carriers)
+carriers$replicate <- rep(1:10, each = length(generations))
+
+qplot(x = generation,
       y = carriers/6400,
-      data = carriers_df,
+      data = carriers,
+      colour = replicate,
       xlab = "Generation",
       ylab = "Lethal allele frequency")
 ```
@@ -88,12 +111,14 @@ qplot(x = generations,
 
 Frequencies of neutral variants
 
+Example with replicate 1
+
 ```{r}
-counts <- lapply(simulation_results$generations,
+counts <- lapply(simulation_results[[1]]$generations,
                      function(gen) {
                           snps <- pullSnpGeno(gen,
-                                              simParam = simulation_results$simparam)
-                          snps <- snps[, simulation_results$other_snp_ix]
+                                              simParam = simulation_results[[1]]$simparam)
+                          snps <- snps[, simulation_results[[1]]$other_snp_ix]
                           colSums(snps)
                       })
 counts_df <- as.data.frame(Reduce(rbind, counts))
@@ -130,9 +155,12 @@ ggplot() +
                   group = name),
               data = counts_long,
               colour = "grey") +
-    geom_line(aes(x = generations,
-                  y = carriers/6400),
-              data = carriers_df,
+    geom_line(aes(x = generation,
+                  y = carriers/6400,
+                  data = carriers,
+                  colour = replicate,
+                  group = replicate),
+              data = carriers,
               colour = "blue") +
     xlab("Generations") +
     ylab("Allele frequency") +

@@ -33,6 +33,8 @@ library(dplyr)
 library(ggplot2)
 library(purrr)
 library(tidyr)
+
+source("R/simulation_functions.R")
 ```
 
 ```{r}
@@ -57,11 +59,7 @@ generations <- 1:40
 Genetic trend
 
 ```{r}
-get_stats <- function(results) data.frame(generation = generations,
-                                           mean_g = unlist(lapply(results$generations, meanG)),
-                                           var_g = unlist(lapply(results$generations, varG)),
-                                           stringsAsFactors = FALSE)
-stats <- map_df(simulation_results, get_stats)
+stats <- map_df(simulation_results, function(x) x$stats)
 stats$replicate <- rep(1:10, each = length(generations))
 
 qplot(x = generation,
@@ -90,14 +88,7 @@ qplot(x = generation,
 Lethal allele frequency
 
 ```{r}
-get_carriers <- function(results) {
-    carriers <- unlist(lapply(results$carrier_status,
-                  function (x) sum(x > 0)))
-    data.frame(generation = generations,
-               carriers = carriers)
-}
-
-carriers <- map_dfr(simulation_results, get_carriers)
+carriers <- map_df(simulation_results, function(x) x$carriers)
 carriers$replicate <- rep(1:10, each = length(generations))
 
 qplot(x = generation,
@@ -114,7 +105,8 @@ Frequencies of neutral variants
 Example with replicate 1
 
 ```{r}
-counts <- lapply(simulation_results[[1]]$generations,
+generations <- readRDS("simulations/simple_simulations/populations_1.Rds")
+counts <- lapply(generations,
                      function(gen) {
                           snps <- pullSnpGeno(gen,
                                               simParam = simulation_results[[1]]$simparam)
@@ -157,11 +149,9 @@ ggplot() +
               colour = "grey") +
     geom_line(aes(x = generation,
                   y = carriers/6400,
-                  data = carriers,
                   colour = replicate,
                   group = replicate),
-              data = carriers,
-              colour = "blue") +
+              data = carriers) +
     xlab("Generations") +
     ylab("Allele frequency") +
     ggtitle("Allele frequency of lethal (blue) and neutral alleles (grey)")

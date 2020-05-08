@@ -47,10 +47,16 @@ pick_lethal <- function(founderpop,
     } else if (lethal_is == "qtl") {
         founder_geno <- pullQtlGeno(founderpop,
                                     simParam = simparam)
+        effects <- simparam$traits[[1]]@addEff
     }
     
     f <- colSums(founder_geno)/(2 * nrow(founder_geno))
     candidates <- which(f > 0.04 & f < 0.06)
+    
+    if (lethal_is == "qtl") {
+        candidate_effects <- effects[candidates]
+        candidates <- candidates[candidate_effects > 0]
+    }
     
     if (length(candidates) < 1) {
         stop("Found no candidate loci with appropriate frequency.")
@@ -60,7 +66,7 @@ pick_lethal <- function(founderpop,
     other_snp_ix <- setdiff(candidates, lethal_ix)
  
     list(lethal_ix = lethal_ix,
-         other_snp_ix = other_snp_ix)   
+         other_snp_ix = other_snp_ix)
 }
 
 ## Create a founder pouplation and a simulation parameters object
@@ -71,18 +77,18 @@ make_simulation <- function(n_ind,
     
     founderpop <- runMacs(nInd = n_ind,
                           nChr = n_chr,
-                          segSites = 1000)
+                          segSites = 500)
     
     simparam <- SimParam$new(founderpop)
     simparam$restrSegSites(maxQtl = 100,
-                           maxSnp = 900,
+                           maxSnp = 400,
                            overlap = FALSE)
     simparam$setGender("yes_sys")
     
     simparam$addTraitA(nQtlPerChr = 100)
     simparam$setVarE(h2 = h2)
     
-    simparam$addSnpChip(nSnpPerChr = 900)
+    simparam$addSnpChip(nSnpPerChr = 400)
     
     founders <- newPop(founderpop,
                        simParam = simparam)
@@ -157,4 +163,27 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
     }
     
     offspring
+}
+
+
+
+###########################
+
+## Functions for analysing simulation results
+
+
+## Get genetic trends
+
+get_stats <- function(generations) data.frame(generation = 1:length(generations),
+                                          mean_g = unlist(lapply(generations, meanG)),
+                                          var_g = unlist(lapply(generations, varG)),
+                                          stringsAsFactors = FALSE)
+
+## Get carrier numbesr for lethal
+
+get_carriers <- function(carrier_status) {
+    carriers <- unlist(lapply(carrier_status,
+                              function (x) sum(x > 0)))
+    data.frame(generation = 1:length(carrier_status),
+               carriers = carriers)
 }

@@ -15,6 +15,8 @@ source("R/simulation_functions.R")
 
 
 for (rep_ix in 1:10) {
+    
+    print(rep_ix)
 
     ## Set up simulation
 
@@ -28,9 +30,9 @@ for (rep_ix in 1:10) {
 
     ## Pick a lethal variant
 
-    chosen_lethal <- pick_lethal(founderpop,
-                             lethal_is = "snp",
-                             simparam)
+    chosen_lethal <- pick_lethal(founders,
+                                 lethal_is = "snp",
+                                 simparam)
     lethal_ix <- chosen_lethal$lethal_ix
     other_snp_ix <- chosen_lethal$other_snp_ix
 
@@ -55,15 +57,28 @@ for (rep_ix in 1:10) {
 
     ## Create simulation object
 
-    simulation_results <- list(generations = generations,
-                               carrier_status = lapply(generations,
-                                                       carrier_test,
-                                                       lethal_ix = lethal_ix,
-                                                       lethal_is = "snp",
-                                                       simparam),
-                               simparam = simparam,
+    carrier_status <- lapply(generations,
+                             carrier_test,
+                             lethal_ix = lethal_ix,
+                             lethal_is = "snp",
+                             simparam)
+    
+    carriers <- get_carriers(carrier_status)
+    
+    stats <- get_stats(generations)
+    
+    simulation_results <- list(simparam = simparam,
+                               carrier_status = carrier_status,
+                               carriers = carriers,
+                               stats = stats,
                                lethal_ix = lethal_ix,
                                other_snp_ix = other_snp_ix)
+    
+    saveRDS(generations,
+            file = paste("simulations/simple_simulations/populations_",
+                         rep_ix,
+                         ".Rds",
+                         sep = ""))
     
     saveRDS(simulation_results, 
             file = paste("simulations/simple_simulations/results_",

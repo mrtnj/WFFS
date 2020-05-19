@@ -60,13 +60,18 @@ pick_lethal <- function(founderpop,
     
     if (length(candidates) < 1) {
         stop("Found no candidate loci with appropriate frequency.")
+    } else if (length(candidates) == 1) {
+        lethal_ix <- candidates
+    
+    } else {
+        lethal_ix <- sample(candidates, 1)
     }
     
-    lethal_ix <- sample(candidates, 1)
     other_snp_ix <- setdiff(candidates, lethal_ix)
  
     list(lethal_ix = lethal_ix,
-         other_snp_ix = other_snp_ix)
+         other_snp_ix = other_snp_ix,
+         founder_lethal_frequency = f[lethal_ix])
 }
 
 ## Create a founder pouplation and a simulation parameters object
@@ -85,7 +90,7 @@ make_simulation <- function(n_ind,
                            overlap = FALSE)
     simparam$setGender("yes_sys")
     
-    simparam$addTraitA(nQtlPerChr = 100)
+    simparam$addTraitA(nQtlPerChr = 10)
     simparam$setVarE(h2 = h2)
     
     simparam$addSnpChip(nSnpPerChr = 400)

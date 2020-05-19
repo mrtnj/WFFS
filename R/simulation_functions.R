@@ -85,8 +85,8 @@ make_simulation <- function(n_ind,
                           segSites = 500)
     
     simparam <- SimParam$new(founderpop)
-    simparam$restrSegSites(maxQtl = 100,
-                           maxSnp = 400,
+    simparam$restrSegSites(minQtlPerChr = 100,
+                           minSnpPerChr = 400,
                            overlap = FALSE)
     simparam$setGender("yes_sys")
     

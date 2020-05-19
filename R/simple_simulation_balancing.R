@@ -36,6 +36,7 @@ for (rep_ix in 1:10) {
                                  simparam)
     lethal_ix <- chosen_lethal$lethal_ix
     other_snp_ix <- chosen_lethal$other_snp_ix
+    founder_lethal_frequency <- chosen_lethal$founder_lethal_frequency
 
 
     ## Breeding simulation
@@ -75,7 +76,15 @@ for (rep_ix in 1:10) {
                                lethal_ix = lethal_ix,
                                other_snp_ix = other_snp_ix,
                                lethal_qtl_effect = simparam$traits[[1]]@addEff[lethal_ix],
-                               other_qtl_effects = simparam$traits[[1]]@addEff[-lethal_ix])
+                               other_qtl_effects = simparam$traits[[1]]@addEff[-lethal_ix],
+                               founder_lethal_frequency = founder_lethal_frequency,
+                               founder_h2 = varG(founders)/varP(founders))
+    
+    simulation_results$founder_variance_explained_by_lethal <-
+        2 * simulation_results$lethal_qtl_effect^2 *
+        simulation_results$founder_lethal_frequency *
+        (1 - simulation_results$founder_lethal_frequency) *
+        simulation_results$founder_h2
     
     saveRDS(generations,
             file = paste("simulations/simple_simulations_balancing/populations_",

@@ -13,79 +13,82 @@ library(AlphaSimR)
 source("R/simulation_functions.R")
 
 
+## Read command line argument -- will be used as suffix for output files
 
-for (rep_ix in 1:10) {
+args <- commandArgs(trailingOnly = TRUE)
+
+rep_ix <- args[1]
+
     
-    print(rep_ix)
+print(rep_ix)
 
-    ## Set up simulation
+## Set up simulation
 
-    setup <- make_simulation(n_ind = 3200,
-                             n_chr = 10,
-                             h2 = 0.4)
+setup <- make_simulation(n_ind = 3200,
+                         n_chr = 10,
+                         h2 = 0.4)
 
-    founders <- setup$founderpop
-    simparam <- setup$simparam
-
-
-    ## Pick a lethal variant
-
-    chosen_lethal <- pick_lethal(founders,
-                                 lethal_is = "snp",
-                                 simparam)
-    lethal_ix <- chosen_lethal$lethal_ix
-    other_snp_ix <- chosen_lethal$other_snp_ix
+founders <- setup$founderpop
+simparam <- setup$simparam
 
 
-    ## Breeding simulation
+## Pick a lethal variant
 
-    n_gen <- 40
+chosen_lethal <- pick_lethal(founders,
+                             lethal_is = "snp",
+                             simparam)
+lethal_ix <- chosen_lethal$lethal_ix
+other_snp_ix <- chosen_lethal$other_snp_ix
 
-    generations <- list(n_gen)
 
-    generations[[1]] <- founders
+## Breeding simulation
 
-    for (gen_ix in 2:n_gen) {
+n_gen <- 40
 
-        generations[[gen_ix]] <-
+generations <- list(n_gen)
+
+generations[[1]] <- founders
+
+for (gen_ix in 2:n_gen) {
+    
+    generations[[gen_ix]] <-
         breed_avoiding_carrier_x_carrier(generations[[gen_ix - 1]],
                                          lethal_ix,
                                          lethal_is = "snp",
                                          simparam)
-    }
-    
-
-    ## Create simulation object
-
-    carrier_status <- lapply(generations,
-                             carrier_test,
-                             lethal_ix = lethal_ix,
-                             lethal_is = "snp",
-                             simparam)
-    
-    carriers <- get_carriers(carrier_status)
-    
-    stats <- get_stats(generations)
-    
-    simulation_results <- list(simparam = simparam,
-                               carrier_status = carrier_status,
-                               carriers = carriers,
-                               stats = stats,
-                               lethal_ix = lethal_ix,
-                               other_snp_ix = other_snp_ix)
-    
-    saveRDS(generations,
-            file = paste("simulations/simple_simulations/populations_",
-                         rep_ix,
-                         ".Rds",
-                         sep = ""))
-    
-    saveRDS(simulation_results, 
-            file = paste("simulations/simple_simulations/results_",
-                         rep_ix,
-                         ".Rds",
-                         sep = ""))
 }
-            
-    
-    
+
+
+## Create simulation object
+
+carrier_status <- lapply(generations,
+                         carrier_test,
+                         lethal_ix = lethal_ix,
+                         lethal_is = "snp",
+                         simparam)
+
+carriers <- get_carriers(carrier_status)
+
+stats <- get_stats(generations)
+
+simulation_results <- list(simparam = simparam,
+                           carrier_status = carrier_status,
+                           carriers = carriers,
+                           stats = stats,
+                           lethal_ix = lethal_ix,
+                           other_snp_ix = other_snp_ix)
+
+saveRDS(generations,
+        file = paste("simulations/simple_simulations/populations_",
+                     rep_ix,
+                     ".Rds",
+                     sep = ""))
+
+saveRDS(simulation_results, 
+        file = paste("simulations/simple_simulations/results_",
+                     rep_ix,
+                     ".Rds",
+                     sep = ""))
+
+
+

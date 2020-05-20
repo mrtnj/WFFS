@@ -37,13 +37,12 @@ source("R/simulation_functions.R")
 ```
 
 ```{r}
-##simulation_results <- readRDS("simulations/simple_simulations/results_2.Rds")
-simulation_results <- lapply(paste("simulations/simple_simulations_balancing/results_",
-                                   1:10,
-                                   ".Rds",
-                                   sep = ""),
+filenames <- system("ls simulations/simple_simulations_balancing/results_*.Rds",
+                    intern = TRUE)
+n_reps <- length(filenames)
+simulation_results <- lapply(filenames,
                              readRDS)
-names(simulation_results) <- 1:10
+names(simulation_results) <- 1:n_reps
 ```
 
 Generation counter
@@ -59,7 +58,7 @@ Genetic trend
 
 ```{r}
 stats <- map_df(simulation_results, function(x) x$stats)
-stats$replicate <- rep(1:10, each = length(generations))
+stats$replicate <- rep(1:n_reps, each = length(generations))
 
 qplot(x = generation,
       y = mean_g,
@@ -88,7 +87,7 @@ Lethal allele frequency
 
 ```{r}
 carriers <- map_df(simulation_results, function(x) x$carriers)
-carriers$replicate <- rep(1:10, each = length(generations))
+carriers$replicate <- rep(1:n_reps, each = length(generations))
 
 qplot(x = generation,
       y = carriers/6400,
@@ -99,4 +98,25 @@ qplot(x = generation,
       group = replicate,
       geom = "line")
 ```
+
+
+# Relationship between variance explained and frequency
+
+```{r}
+founder_variance_explained <- unlist(lapply(simulation_results,
+                                            "[",
+                                            "founder_variance_explained_by_lethal"))
+end_carriers <- do(group_by(carriers, replicate),
+                   data.frame(average30_40 = mean(.$carriers[.$generation %in% 31:40])))
+qplot(x = founder_variance_explained,
+      y = end_carriers$average30_40/6400) +
+    xlab("Variance explained in breeding goal in founder population") +
+    ylab("Lethal allele frequency (in generations 31-40)")
+```
+
+```{r}
+mean(end_carriers$average30_40/6400)
+sd(end_carriers$average30_40/6400)
+```
+
 

@@ -97,13 +97,14 @@ qplot(x = generation,
       group = replicate,
       xlab = "Generation",
       ylab = "Lethal allele frequency",
-      geom = "line")
+      geom = "line") +
+    ggtitle("Lethal allele frequency change without balancing selection")
 ```
 
 
 ```{r}
 end_carriers <- do(group_by(carriers, replicate),
-                   data.frame(average30_40 = mean(.$carriers[.$generation %in% 30:40])))
+                   data.frame(average30_40 = mean(.$carriers[.$generation %in% 31:40])))
 mean(end_carriers$average30_40/6400)
 sd(end_carriers$average30_40/6400)
 ```

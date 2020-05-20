@@ -96,7 +96,8 @@ qplot(x = generation,
       xlab = "Generation",
       ylab = "Lethal allele frequency",
       group = replicate,
-      geom = "line")
+      geom = "line") +
+    ggtitle("Lethal allele frequency change with balancing selection")
 ```
 
 

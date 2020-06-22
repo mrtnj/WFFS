@@ -25,7 +25,7 @@ print(rep_ix)
 
 ## Set up simulation
 
-setup <- make_simulation(n_ind = 3200,
+setup <- make_simulation(n_ind = 6000,
                          n_chr = 10,
                          h2 = 0.4)
 

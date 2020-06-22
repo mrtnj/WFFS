@@ -91,13 +91,13 @@ simulation_results$founder_variance_explained_by_lethal <-
     simulation_results$founder_h2
 
 saveRDS(generations,
-        file = paste("simulations/simple_simulations_balancing/populations_",
+        file = paste("simulations/simple_simulations_unknown_balancing/populations_",
                      rep_ix,
                      ".Rds",
                      sep = ""))
 
 saveRDS(simulation_results, 
-        file = paste("simulations/simple_simulations_balancing/results_",
+        file = paste("simulations/simple_simulations_unknown_balancing/results_",
                      rep_ix,
                      ".Rds",
                      sep = ""))

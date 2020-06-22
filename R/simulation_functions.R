@@ -171,6 +171,54 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
 }
 
 
+breed_unknown_lethal <- function(parent_generation,
+                                 lethal_ix,
+                                 lethal_is,
+                                 simparam) {
+    
+    ## Exclude dams who are affected
+    dams <- parent_generation[parent_generation@gender == "F"]
+    
+    dam_carrier_status <- carrier_test(dams,
+                                       lethal_ix,
+                                       lethal_is,
+                                       simparam)
+    
+    nonaffected_dams <- dams[dam_carrier_status < 2]
+    
+    n_nonaffected_dams <- sum(dam_carrier_status < 2)
+    
+    ## Exclude sires who are affected
+    potential_sires <- parent_generation[parent_generation@gender == "M"]
+    
+    sire_carrier_status <- carrier_test(sires,
+                                        lethal_ix,
+                                        lethal_is,
+                                        simparam)
+    
+    nonaffected_sires <- potential_sires[sire_carrier_status < 2]
+
+    
+    sires <- selectInd(pop = nonaffected_sires,
+                       trait = 1,
+                       use = "pheno",
+                       gender = "M",
+                       nInd = 200,
+                       simParam = simparam)
+    
+    
+    ## Create matings
+    
+    offspring <- randCross2(females = nonaffected_dams,
+                            males = sires,
+                            nProgeny = 1,
+                            nCrosses = 6000,
+                            simParam = simparam)
+    
+    offspring
+}
+
+
 
 ###########################
 

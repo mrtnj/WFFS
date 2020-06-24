@@ -54,7 +54,7 @@ generations[[1]] <- founders
 for (gen_ix in 2:n_gen) {
     
     generations[[gen_ix]] <-
-        breed_unknwon_lethal(generations[[gen_ix - 1]],
+        breed_unknown_lethal(generations[[gen_ix - 1]],
                              lethal_ix,
                              lethal_is = "qtl",
                              simparam)

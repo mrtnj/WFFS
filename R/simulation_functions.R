@@ -191,7 +191,7 @@ breed_unknown_lethal <- function(parent_generation,
     ## Exclude sires who are affected
     potential_sires <- parent_generation[parent_generation@gender == "M"]
     
-    sire_carrier_status <- carrier_test(sires,
+    sire_carrier_status <- carrier_test(potential_sires,
                                         lethal_ix,
                                         lethal_is,
                                         simparam)

@@ -85,7 +85,7 @@ saveRDS(generations,
                      sep = ""))
 
 saveRDS(simulation_results, 
-        file = paste("simulations/simple_simulations/unknown/results_",
+        file = paste("simulations/simple_simulations_unknown/results_",
                      rep_ix,
                      ".Rds",
                      sep = ""))

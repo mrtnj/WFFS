@@ -232,11 +232,45 @@ get_stats <- function(generations) data.frame(generation = 1:length(generations)
                                           var_g = unlist(lapply(generations, varG)),
                                           stringsAsFactors = FALSE)
 
-## Get carrier numbesr for lethal
+## Get carrier numbers for lethal
 
 get_carriers <- function(carrier_status) {
     carriers <- unlist(lapply(carrier_status,
                               function (x) sum(x > 0)))
     data.frame(generation = 1:length(carrier_status),
                carriers = carriers)
+}
+
+
+## Genetic trend plot from stats
+
+genetic_trend_plot <- function(stats) {
+    qplot(x = generation,
+          y = mean_g,
+          colour = replicate,
+          data = stats,
+          xlab = "Generation",
+          ylab = "Mean genetic value",
+          main = "Genetic trend")
+}
+
+genetic_variance_plot <- function(stats) {
+    qplot(x = generation,
+          y = var_g,
+          data = stats,
+          colour = replicate,
+          xlab = "Generation",
+          ylab = "Genetic variance",
+          main = "Genetic variance trend")
+}
+
+lethal_frequency_plot <- function(carriers) {
+    qplot(x = generation,
+          y = carriers/2/n,
+          data = carriers,
+          colour = replicate,
+          group = replicate,
+          xlab = "Generation",
+          ylab = "Lethal allele frequency",
+          geom = "line")
 }

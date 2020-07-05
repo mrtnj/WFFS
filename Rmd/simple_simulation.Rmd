@@ -66,25 +66,13 @@ Genetic trend
 stats <- map_df(simulation_results, function(x) x$stats)
 stats$replicate <- rep(1:n_reps, each = length(generations))
 
-qplot(x = generation,
-      y = mean_g,
-      colour = replicate,
-      data = stats,
-      xlab = "Generation",
-      ylab = "Mean genetic value",
-      main = "Genetic trend")
+(genetic_trend_plot(stats))
 ```
 
 Genetic variance
 
 ```{r}
-qplot(x = generation,
-      y = var_g,
-      data = stats,
-      colour = replicate,
-      xlab = "Generation",
-      ylab = "Genetic variance",
-      main = "Genetic variance trend")
+(genetic_variance_plot(stats))
 ```
 
 ## Allele frequency changes
@@ -95,14 +83,7 @@ qplot(x = generation,
 carriers <- map_df(simulation_results, function(x) x$carriers)
 carriers$replicate <- rep(1:n_reps, each = length(generations))
 
-qplot(x = generation,
-      y = carriers/2/n,
-      data = carriers,
-      colour = replicate,
-      group = replicate,
-      xlab = "Generation",
-      ylab = "Lethal allele frequency",
-      geom = "line") +
+lethal_frequency_plot(carriers) +
     ggtitle("Lethal allele frequency change without balancing selection")
 ```
 

@@ -237,15 +237,19 @@ get_stats <- function(generations) data.frame(generation = 1:length(generations)
 get_carriers <- function(carrier_status) {
     carriers <- unlist(lapply(carrier_status,
                               function (x) sum(x > 0)))
+    n <- unlist(lapply(carrier_status,
+                       length))
     data.frame(generation = 1:length(carrier_status),
-               carriers = carriers)
+               carriers = carriers,
+               n = n)
 }
 
 ## Summarise carriers during last generations
 
 get_end_carriers <- function(carriers) {
     do(group_by(carriers, replicate),
-       data.frame(average30_40 = mean(.$carriers[.$generation %in% 31:40])))   
+       data.frame(average30_40 = mean(.$carriers[.$generation %in% 31:40]),
+                  average_n = mean(.$n[.$generation %in% 31:40])))   
 }
 
 

@@ -43,17 +43,13 @@ filenames <- system("ls simulations/simple_simulations/results_*.Rds",
 n_reps <- length(filenames)
 simulation_results <- lapply(filenames,
                              readRDS)
-names(simulation_results) <- 1:10
+names(simulation_results) <- 1:n_reps
 ```
 
 Generation counter
 
 ```{r}
 generations <- 1:40
-```
-
-```{r}
-n <- 3000
 ```
 
 
@@ -80,7 +76,7 @@ Genetic variance
 ### Lethal allele frequency
 
 ```{r}
-carriers <- map_df(simulation_results, function(x) x$carriers)
+carriers <- map_df(simulation_results, function(x) get_carriers(x$carrier_status))
 carriers$replicate <- rep(1:n_reps, each = length(generations))
 
 lethal_frequency_plot(carriers) +
@@ -90,8 +86,8 @@ lethal_frequency_plot(carriers) +
 
 ```{r}
 end_carriers <- get_end_carriers(carriers)
-mean(end_carriers$average30_40/2/n)
-sd(end_carriers$average30_40/2/n)
+mean(end_carriers$average30_40/2/end_carriers$average_n)
+sd(end_carriers$average30_40/2/end_carriers$average_n)
 ```
 
 
@@ -114,7 +110,7 @@ counts_df$generation <- 1:40
 counts_long <- pivot_longer(counts_df,
                             -generation)
 qplot(x = generation,
-      y = value/2/n,
+      y = value/2/6000,
       group = name,
       data = counts_long,
       geom = "line",
@@ -131,12 +127,12 @@ Combined plot
 
 ggplot() +
     geom_line(aes(x = generation,
-                  y = value/2/n,
+                  y = value/2/6000,
                   group = name),
               data = counts_long,
               colour = "grey") +
     geom_line(aes(x = generation,
-                  y = carriers/2/n,
+                  y = carriers/2/6000,
                   colour = replicate,
                   group = replicate),
               data = carriers) +

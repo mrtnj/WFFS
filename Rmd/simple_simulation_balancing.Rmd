@@ -52,10 +52,6 @@ generations <- 1:40
 ```
 
 
-```{r}
-n <- 3000
-```
-
 
 ## Basic features of the simulation
 
@@ -79,7 +75,7 @@ Genetic variance
 Lethal allele frequency
 
 ```{r}
-carriers <- map_df(simulation_results, function(x) x$carriers)
+carriers <- map_df(simulation_results, function(x) get_carriers(x$carrier_status))
 carriers$replicate <- rep(1:n_reps, each = length(generations))
 
 lethal_frequency_plot(carriers) +
@@ -95,14 +91,14 @@ founder_variance_explained <- unlist(lapply(simulation_results,
                                             "founder_variance_explained_by_lethal"))
 end_carriers <- get_end_carriers(carriers)
 qplot(x = founder_variance_explained,
-      y = end_carriers$average30_40/2/n) +
+      y = end_carriers$average30_40/2/end_carriers$average_n) +
     xlab("Variance explained in breeding goal in founder population") +
     ylab("Lethal allele frequency (in generations 31-40)")
 ```
 
 ```{r}
-mean(end_carriers$average30_40/2/n)
-sd(end_carriers$average30_40/2/n)
+mean(end_carriers$average30_40/2/end_carriers$average_n)
+sd(end_carriers$average30_40/2/end_carriers$average_n)
 ```
 
 

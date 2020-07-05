@@ -237,10 +237,13 @@ get_stats <- function(generations) data.frame(generation = 1:length(generations)
 get_carriers <- function(carrier_status) {
     carriers <- unlist(lapply(carrier_status,
                               function (x) sum(x > 0)))
+    cases <- unlist(lapply(carrier_status,
+                           function (x) sum(x == 2)))
     n <- unlist(lapply(carrier_status,
                        length))
     data.frame(generation = 1:length(carrier_status),
                carriers = carriers,
+               cases = cases,
                n = n)
 }
 

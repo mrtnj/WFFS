@@ -241,6 +241,13 @@ get_carriers <- function(carrier_status) {
                carriers = carriers)
 }
 
+## Summarise carriers during last generations
+
+get_end_carriers <- function(carriers) {
+    do(group_by(carriers, replicate),
+       data.frame(average30_40 = mean(.$carriers[.$generation %in% 31:40])))   
+}
+
 
 ## Genetic trend plot from stats
 
@@ -274,3 +281,4 @@ lethal_frequency_plot <- function(carriers) {
           ylab = "Lethal allele frequency",
           geom = "line")
 }
+

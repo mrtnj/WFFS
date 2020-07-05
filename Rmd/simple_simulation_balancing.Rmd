@@ -93,8 +93,7 @@ lethal_frequency_plot(carriers) +
 founder_variance_explained <- unlist(lapply(simulation_results,
                                             "[",
                                             "founder_variance_explained_by_lethal"))
-end_carriers <- do(group_by(carriers, replicate),
-                   data.frame(average30_40 = mean(.$carriers[.$generation %in% 31:40])))
+end_carriers <- get_end_carriers(carriers)
 qplot(x = founder_variance_explained,
       y = end_carriers$average30_40/2/n) +
     xlab("Variance explained in breeding goal in founder population") +

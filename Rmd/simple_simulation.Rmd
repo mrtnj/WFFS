@@ -89,8 +89,7 @@ lethal_frequency_plot(carriers) +
 
 
 ```{r}
-end_carriers <- do(group_by(carriers, replicate),
-                   data.frame(average30_40 = mean(.$carriers[.$generation %in% 31:40])))
+end_carriers <- get_end_carriers(carriers)
 mean(end_carriers$average30_40/2/n)
 sd(end_carriers$average30_40/2/n)
 ```

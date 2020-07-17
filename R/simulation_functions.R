@@ -230,6 +230,62 @@ breed_unknown_lethal <- function(parent_generation,
 }
 
 
+## Breed with selection against carriers
+##
+## Parameters:
+## * parent_generation -- population object with the parents
+## * lethal_ix -- number of lethal in SNP or QTL genotypes
+## * lethal_is -- indicator for pleiotropy, either "snp" (neutral variant) or 
+##                "qtl" for pleiotropy
+## * n_sires -- number of sires used each generation
+## * simparam -- simulation parameter object
+
+breed_against_lethal <- function(parent_generation,
+                                 lethal_ix,
+                                 lethal_is,
+                                 simparam) {
+    
+    ## Exclude dams who are affected
+    dams <- parent_generation[parent_generation@gender == "F"]
+    
+    dam_carrier_status <- carrier_test(dams,
+                                       lethal_ix,
+                                       lethal_is,
+                                       simparam)
+    
+    nonaffected_dams <- dams[dam_carrier_status < 2]
+    
+    ## Exclude sires who are affected or carriers
+    potential_sires <- parent_generation[parent_generation@gender == "M"]
+    
+    sire_carrier_status <- carrier_test(potential_sires,
+                                        lethal_ix,
+                                        lethal_is,
+                                        simparam)
+    
+    noncarrier_sires <- potential_sires[sire_carrier_status == 0]
+    
+    
+    sires <- selectInd(pop = noncarrier_sires,
+                       trait = 1,
+                       use = "pheno",
+                       gender = "M",
+                       nInd = n_sires,
+                       simParam = simparam)
+    
+    
+    ## Create matings
+    
+    offspring <- randCross2(females = nonaffected_dams,
+                            males = sires,
+                            nProgeny = 1,
+                            nCrosses = 6000,
+                            simParam = simparam)
+    
+    offspring
+}
+
+
 
 ###########################
 

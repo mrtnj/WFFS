@@ -26,7 +26,7 @@ print(rep_ix)
 
 setup <- make_simulation(n_ind = 6000,
                          n_chr = 10,
-                         h2 = 0.4)
+                         h2 = 0.3)
 
 founders <- setup$founderpop
 simparam <- setup$simparam
@@ -55,6 +55,7 @@ for (gen_ix in 2:n_gen) {
         breed_unknown_lethal(generations[[gen_ix - 1]],
                              lethal_ix,
                              lethal_is = "snp",
+                             n_sires = 300,
                              simparam)
 }
 

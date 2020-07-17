@@ -45,7 +45,7 @@ founder_lethal_frequency <- chosen_lethal$founder_lethal_frequency
 
 ## Breeding simulation
 
-n_gen <- 40
+n_gen <- 20
 
 generations <- list(n_gen)
 

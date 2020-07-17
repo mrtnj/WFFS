@@ -43,7 +43,7 @@ other_snp_ix <- chosen_lethal$other_snp_ix
 
 ## Breeding simulation
 
-n_gen <- 40
+n_gen <- 20
 
 generations <- list(n_gen)
 

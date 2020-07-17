@@ -8,8 +8,24 @@ if [ ! -d simulations/simple_simulations ]; then
     mkdir simulations/simple_simulations
 fi
 
-for REP in {1..100}; do
+for SELECTION_RULE in avoid_carrier_x_carrier unknown_lethal selection_against; do
 
-    Rscript R/simple_simulation.R $REP
+    for LETHAL_IS in snp qtl; do
+    
+        if [ ! -d simulations/simple_simulations/${SELECTION_RULE}_${LETHAL_IS} ]; then
+            mkdir simulations/simple_simulations/${SELECTION_RULE}_${LETHAL_IS}
+        fi
+
+        for REP in 1; do
+
+            Rscript R/simple_simulation.R \
+                $SELECTION_RULE \
+                $LETHAL_IS \
+                simulations/simple_simulations/${SELECTION_RULE}_${LETHAL_IS}/populations_$REP.Rds \
+                simulations/simple_simulations/${SELECTION_RULE}_${LETHAL_IS}/results_$REP.Rds \
+                
+        done
+        
+    done        
     
 done

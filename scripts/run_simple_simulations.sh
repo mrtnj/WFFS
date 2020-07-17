@@ -16,7 +16,7 @@ for SELECTION_RULE in avoid_carrier_x_carrier unknown_lethal selection_against; 
             mkdir simulations/simple_simulations/${SELECTION_RULE}_${LETHAL_IS}
         fi
 
-        for REP in 1; do
+        for REP in {1..100}; do
 
             Rscript R/simple_simulation.R \
                 $SELECTION_RULE \

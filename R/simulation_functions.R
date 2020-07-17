@@ -22,7 +22,7 @@ carrier_test <- function(pop,
                               simParam = simparam)[, lethal_ix]
     } else if (lethal_is == "qtl") {
         result <- pullQtlGeno(pop,
-                              simParam = simparam,)[, lethal_ix]
+                              simParam = simparam)[, lethal_ix]
     }
     
     result
@@ -110,11 +110,13 @@ make_simulation <- function(n_ind,
 ## * lethal_ix -- number of lethal in SNP or QTL genotypes
 ## * lethal_is -- indicator for pleiotropy, either "snp" (neutral variant) or 
 ##                "qtl" for pleiotropy
+## * n_sires -- number of sires used each generation
 ## * simparam -- simulation parameter object
 
 breed_avoiding_carrier_x_carrier <- function(parent_generation,
                                              lethal_ix,
                                              lethal_is,
+                                             n_sires,
                                              simparam) {
 
     ## Take all females as dams and split them in carrier/noncarrier
@@ -135,7 +137,7 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
                        trait = 1,
                        use = "pheno",
                        gender = "M",
-                       nInd = 200,
+                       nInd = n_sires,
                        simParam = simparam)
 
     sire_carrier_status <- carrier_test(sires,
@@ -171,6 +173,17 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
 }
 
 
+## Simulate breeding with an unknown lethal. Individuals homozygous for the
+## lethal are not used in breeding.
+##
+## Parameters:
+## * parent_generation -- population object with the parents
+## * lethal_ix -- number of lethal in SNP or QTL genotypes
+## * lethal_is -- indicator for pleiotropy, either "snp" (neutral variant) or 
+##                "qtl" for pleiotropy
+## * n_sires -- number of sires used each generation
+## * simparam -- simulation parameter object
+
 breed_unknown_lethal <- function(parent_generation,
                                  lethal_ix,
                                  lethal_is,
@@ -185,8 +198,6 @@ breed_unknown_lethal <- function(parent_generation,
                                        simparam)
     
     nonaffected_dams <- dams[dam_carrier_status < 2]
-    
-    n_nonaffected_dams <- sum(dam_carrier_status < 2)
     
     ## Exclude sires who are affected
     potential_sires <- parent_generation[parent_generation@gender == "M"]
@@ -203,7 +214,7 @@ breed_unknown_lethal <- function(parent_generation,
                        trait = 1,
                        use = "pheno",
                        gender = "M",
-                       nInd = 200,
+                       nInd = n_sires,
                        simParam = simparam)
     
     
@@ -231,6 +242,15 @@ get_stats <- function(generations) data.frame(generation = 1:length(generations)
                                           mean_g = unlist(lapply(generations, meanG)),
                                           var_g = unlist(lapply(generations, varG)),
                                           stringsAsFactors = FALSE)
+
+
+## Improvement per year expressed in genetic sd
+
+get_sd_per_year <- function(rep_stats) {
+    rep_stats$mean_g[-1] - rep_stats$mean_g[-length(rep_stats$mean_g)]
+}
+
+
 
 ## Get carrier numbers for lethal
 

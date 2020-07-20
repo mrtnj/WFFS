@@ -187,6 +187,7 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
 breed_unknown_lethal <- function(parent_generation,
                                  lethal_ix,
                                  lethal_is,
+                                 n_sires,
                                  simparam) {
     
     ## Exclude dams who are affected
@@ -243,6 +244,7 @@ breed_unknown_lethal <- function(parent_generation,
 breed_against_lethal <- function(parent_generation,
                                  lethal_ix,
                                  lethal_is,
+                                 n_sires,
                                  simparam) {
     
     ## Exclude dams who are affected

@@ -4,19 +4,6 @@ author: "Martin Johnsson"
 output: html_document
 ---
 
-Simple simulation with these features:
-
-* Discrete generations
-
-* 3000 females, 200 males used each generation
-
-* Selection only on the male side
-
-* 6000 matings with equal sex ratio => 200 out of 3000 (3.3% of males used)
-
-* One fully recessive lethal ~ 5% starting frequency
-
-* No carrier x carrier matings; carrier x noncarrier matings allowed
 
 ## Housekeeping
 
@@ -38,18 +25,15 @@ source("R/simulation_functions.R")
 ```
 
 ```{r}
-filenames <- system("ls simulations/simple_simulations/results_*.Rds",
+filenames <- system("ls simulations/simple_simulations/avoid_carrier_x_carrier_snp/results_*.Rds",
                     intern = TRUE)
-n_reps <- length(filenames)
-simulation_results <- lapply(filenames,
-                             readRDS)
-names(simulation_results) <- 1:n_reps
+simulation_results <- read_results(filenames)
 ```
 
 Generation counter
 
 ```{r}
-generations <- 1:40
+generations <- 1:20
 ```
 
 
@@ -59,8 +43,7 @@ generations <- 1:40
 Genetic trend
 
 ```{r}
-stats <- map_df(simulation_results, function(x) x$stats)
-stats$replicate <- rep(1:n_reps, each = length(generations))
+stats <- combined_stats(simulation_results)
 
 (genetic_trend_plot(stats))
 ```
@@ -76,8 +59,7 @@ Genetic variance
 ### Lethal allele frequency
 
 ```{r}
-carriers <- map_df(simulation_results, function(x) get_carriers(x$carrier_status))
-carriers$replicate <- rep(1:n_reps, each = length(generations))
+carriers <- combined_carriers(simulation_results)
 
 lethal_frequency_plot(carriers) +
     ggtitle("Lethal allele frequency change without balancing selection")
@@ -86,19 +68,19 @@ lethal_frequency_plot(carriers) +
 
 ```{r}
 end_carriers <- get_end_carriers(carriers)
-mean(end_carriers$average30_40/2/end_carriers$average_n)
-sd(end_carriers$average30_40/2/end_carriers$average_n)
+mean(end_carriers$average_carriers/2/end_carriers$average_n)
+sd(end_carriers$average_carriers/2/end_carriers$average_n)
 ```
 
 
 
-### Frequencies of neutral variants
+### Comparison of lethals with neutral variants
 
 Example with replicate 1
 
 ```{r}
-generations <- readRDS("simulations/simple_simulations/populations_1.Rds")
-counts <- lapply(generations,
+populations <- readRDS("simulations/simple_simulations/avoid_carrier_x_carrier_snp/populations_1.Rds")
+counts <- lapply(populations,
                      function(gen) {
                           snps <- pullSnpGeno(gen,
                                               simParam = simulation_results[[1]]$simparam)
@@ -106,7 +88,7 @@ counts <- lapply(generations,
                           colSums(snps)
                       })
 counts_df <- as.data.frame(Reduce(rbind, counts))
-counts_df$generation <- 1:40
+counts_df$generation <- generations
 counts_long <- pivot_longer(counts_df,
                             -generation)
 qplot(x = generation,

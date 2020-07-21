@@ -1,5 +1,5 @@
 
-## Helper functions
+## Helper functions 
 
 
 ## Performs carrier test for a population, returning genotypes at the
@@ -293,6 +293,18 @@ breed_against_lethal <- function(parent_generation,
 
 ## Functions for analysing simulation results
 
+## Read simulation results
+
+read_results <- function(filenames) {
+
+    n_reps <- length(filenames)
+    simulation_results <- lapply(filenames,
+                                 readRDS)
+    names(simulation_results) <- 1:n_reps
+
+    simulation_results
+}
+
 
 ## Get genetic trends
 
@@ -300,6 +312,18 @@ get_stats <- function(generations) data.frame(generation = 1:length(generations)
                                           mean_g = unlist(lapply(generations, meanG)),
                                           var_g = unlist(lapply(generations, varG)),
                                           stringsAsFactors = FALSE)
+
+## Get combined stats from a list of simulations
+
+combined_stats <- function(simulation_results) {
+    n_reps <- length(simulation_results)
+    n_generations <- nrow(simulation_results[[1]]$stats)
+    
+    stats <- map_df(simulation_results, function(x) x$stats)
+    stats$replicate <- rep(1:n_reps, each = n_generations)
+    
+    stats
+}
 
 
 ## Improvement per year expressed in genetic sd
@@ -325,13 +349,28 @@ get_carriers <- function(carrier_status) {
                n = n)
 }
 
+## Get combined carrier numbers for list of simulations
+
+combined_carriers <- function(simulation_results) {
+    n_reps <- length(simulation_results)
+    n_generations <- nrow(simulation_results[[1]]$stats)
+    
+    carriers <- map_df(simulation_results, function(x) get_carriers(x$carrier_status))
+    carriers$replicate <- rep(1:n_reps, each = n_generations)
+
+    carriers    
+}
+
 ## Summarise carriers during last generations
 
-get_end_carriers <- function(carriers) {
+get_end_carriers <- function(carriers,
+                             gen_start = 11,
+                             gen_end = 20) {
     do(group_by(carriers, replicate),
-       data.frame(average30_40 = mean(.$carriers[.$generation %in% 31:40]),
-                  average_n = mean(.$n[.$generation %in% 31:40])))   
+       data.frame(average_carriers = mean(.$carriers[.$generation %in% gen_start:gen_end]),
+                  average_n = mean(.$n[.$generation %in% gen_start:gen_end])))
 }
+
 
 
 ## Genetic trend plot from stats
@@ -340,7 +379,9 @@ genetic_trend_plot <- function(stats) {
     qplot(x = generation,
           y = mean_g,
           colour = replicate,
+          group = replicate,
           data = stats,
+          geom = "line",
           xlab = "Generation",
           ylab = "Mean genetic value",
           main = "Genetic trend")
@@ -351,6 +392,8 @@ genetic_variance_plot <- function(stats) {
           y = var_g,
           data = stats,
           colour = replicate,
+          group = replicate,
+          geom = "line",
           xlab = "Generation",
           ylab = "Genetic variance",
           main = "Genetic variance trend")

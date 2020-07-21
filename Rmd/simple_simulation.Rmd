@@ -18,6 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(AlphaSimR)
 library(dplyr)
 library(ggplot2)
+library(patchwork)
 library(purrr)
 library(tidyr)
 
@@ -25,9 +26,20 @@ source("R/simulation_functions.R")
 ```
 
 ```{r}
-filenames <- system("ls simulations/simple_simulations/avoid_carrier_x_carrier_snp/results_*.Rds",
-                    intern = TRUE)
-simulation_results <- read_results(filenames)
+results_avoid_cxc_snp <- read_results(system("ls simulations/simple_simulations/avoid_carrier_x_carrier_snp/results_*.Rds",
+                                             intern = TRUE))
+results_avoid_cxc_qtl <- read_results(system("ls simulations/simple_simulations/avoid_carrier_x_carrier_qtl/results_*.Rds",
+                                             intern = TRUE))
+
+results_unknown_snp <- read_results(system("ls simulations/simple_simulations/unknown_lethal_snp/results_*.Rds",
+                                           intern = TRUE))
+results_unknown_qtl <- read_results(system("ls simulations/simple_simulations/unknown_lethal_qtl/results_*.Rds",
+                                           intern = TRUE))
+
+results_selection_snp <- read_results(system("ls simulations/simple_simulations/selection_against_snp/results_*.Rds",
+                                             intern = TRUE))
+results_selection_qtl <- read_results(system("ls simulations/simple_simulations/selection_against_qtl/results_*.Rds",
+                                             intern = TRUE))
 ```
 
 Generation counter
@@ -43,15 +55,27 @@ generations <- 1:20
 Genetic trend
 
 ```{r}
-stats <- combined_stats(simulation_results)
+stats_avoid_cxc_snp <- combined_stats(results_avoid_cxc_snp)
+stats_avoid_cxc_qtl <- combined_stats(results_avoid_cxc_qtl)
 
-(genetic_trend_plot(stats))
+stats_unknown_snp <- combined_stats(results_unknown_snp)
+stats_unknown_qtl <- combined_stats(results_unknown_qtl)
+
+stats_selection_snp <- combined_stats(results_selection_snp)
+stats_selection_qtl <- combined_stats(results_selection_qtl)
+
+(genetic_trend_plot(stats_avoid_cxc_qtl) |
+        genetic_trend_plot(stats_avoid_cxc_qtl)) /
+    (genetic_trend_plot(stats_unknown_snp) |
+        genetic_trend_plot(stats_unknown_qtl)) /
+    (genetic_trend_plot(stats_selection_snp) |
+        genetic_trend_plot(stats_selection_qtl))
 ```
 
 Genetic variance
 
 ```{r}
-(genetic_variance_plot(stats))
+(genetic_variance_plot(stats_avoid_cxc_snp))
 ```
 
 ## Allele frequency changes
@@ -59,22 +83,116 @@ Genetic variance
 ### Lethal allele frequency
 
 ```{r}
-carriers <- combined_carriers(simulation_results)
+carriers_avoid_cxc_snp <- combined_carriers(results_avoid_cxc_snp)
+carriers_avoid_cxc_qtl <- combined_carriers(results_avoid_cxc_qtl)
 
-lethal_frequency_plot(carriers) +
-    ggtitle("Lethal allele frequency change without balancing selection")
+carriers_unknown_snp <- combined_carriers(results_unknown_snp)
+carriers_unknown_qtl <- combined_carriers(results_unknown_qtl)
+
+carriers_selection_snp <- combined_carriers(results_selection_snp)
+carriers_selection_qtl <- combined_carriers(results_selection_qtl)
+
+freq_formatting <- list(theme(legend.position = "none"),
+                        ylim(0, 0.2))
+
+((lethal_frequency_plot(carriers_avoid_cxc_snp) +
+      ggtitle("Lethal allele frequency change without balancing selection") +
+      freq_formatting) |
+        (lethal_frequency_plot(carriers_avoid_cxc_qtl) +
+             ggtitle("Lethal allele frequency change with balancing selection") +
+             freq_formatting)) /
+    ((lethal_frequency_plot(carriers_unknown_snp) +
+          ggtitle("Unknown lethal, without balancing selection") +
+          freq_formatting) |
+         (lethal_frequency_plot(carriers_unknown_qtl) +
+              ggtitle("Unknown lethal, with balancing selection") +
+              freq_formatting)) /
+    ((lethal_frequency_plot(carriers_selection_snp) +
+          ggtitle("Culling in sires, without balancing selection") +
+          freq_formatting) |
+         (lethal_frequency_plot(carriers_selection_qtl) +
+              ggtitle("Culling in sires, with balancing selection") +
+              freq_formatting))
+    
 ```
 
 
 ```{r}
-end_carriers <- get_end_carriers(carriers)
-mean(end_carriers$average_carriers/2/end_carriers$average_n)
-sd(end_carriers$average_carriers/2/end_carriers$average_n)
+end_carriers_avoid_cxc_snp <- get_end_carriers(carriers_avoid_cxc_snp)
+end_carriers_avoid_cxc_qtl <- get_end_carriers(carriers_avoid_cxc_qtl)
+
+end_carriers_unknown_snp <- get_end_carriers(carriers_unknown_snp)
+end_carriers_unknown_qtl <- get_end_carriers(carriers_unknown_qtl)
+
+end_carriers_selection_snp <- get_end_carriers(carriers_selection_snp)
+end_carriers_selection_qtl <- get_end_carriers(carriers_selection_qtl)
+
+carrier_stats <- rbind(transform(end_carrier_stats(end_carriers_avoid_cxc_snp),
+                                 case = "Baseline"),
+                       transform(end_carrier_stats(end_carriers_avoid_cxc_qtl),
+                                 case = "Baseline, balancing"),
+                       
+                       transform(end_carrier_stats(end_carriers_unknown_snp),
+                                 case = "Unknown lethal"),
+                       transform(end_carrier_stats(end_carriers_unknown_qtl),
+                                 case = "Unknown lethal, balancing"),
+                       
+                       transform(end_carrier_stats(end_carriers_selection_snp),
+                                 case = "Culling sires"),
+                       transform(end_carrier_stats(end_carriers_selection_qtl),
+                                 case = "Culling sires, balancing"))
+
+qplot(x = case, ymin = lower, ymax = upper, y = mean_frequency,
+      data = carrier_stats,
+      geom = "pointrange") +
+    ggtitle("Lethal frequency in generation 16-20 (5% quantile, mean, 95% quantile)")
+```
+
+
+## Relationsip between frequency and QTL effect (balancing selection case)
+
+
+```{r}
+balancing_stats_avoid_cxc <- get_balancing_stats(results_avoid_cxc_qtl)
+balancing_stats_unknown <- get_balancing_stats(results_unknown_qtl)
+balancing_stats_selection <- get_balancing_stats(results_selection_qtl)
+
+formatting_balancing <- list(xlim(0, 0.015),
+                             ylim(0, 0.2))
+
+((balancing_stat_plot(balancing_stats_avoid_cxc) +
+      formatting_balancing)/
+    (balancing_stat_plot(balancing_stats_unknown) +
+         formatting_balancing) /
+        (balancing_stat_plot(balancing_stats_selection) +
+             formatting_balancing))
 ```
 
 
 
-### Comparison of lethals with neutral variants
+## Number of affected individuals (unknown lethal case)
+
+
+```{r}
+ymax <- max(c(carriers_unknown_qtl$cases,
+              carriers_unknown_snp$cases))
+
+formatting_affected <- list(ylim(0, ymax),
+                            theme(legend.position = "none"))
+
+((affected_plot(carriers_unknown_snp) + 
+     formatting_affected ) |
+     (affected_plot(carriers_unknown_qtl) +
+          formatting_affected))
+
+```
+
+
+
+
+
+
+### Comparison of lethals with neutral variants (baseline case)
 
 Example with replicate 1
 
@@ -83,8 +201,8 @@ populations <- readRDS("simulations/simple_simulations/avoid_carrier_x_carrier_s
 counts <- lapply(populations,
                      function(gen) {
                           snps <- pullSnpGeno(gen,
-                                              simParam = simulation_results[[1]]$simparam)
-                          snps <- snps[, simulation_results[[1]]$other_snp_ix]
+                                              simParam = results_avoid_cxc_snp[[1]]$simparam)
+                          snps <- snps[, results_avoid_cxc_snp[[1]]$other_snp_ix]
                           colSums(snps)
                       })
 counts_df <- as.data.frame(Reduce(rbind, counts))
@@ -117,7 +235,7 @@ ggplot() +
                   y = carriers/2/6000,
                   colour = replicate,
                   group = replicate),
-              data = carriers) +
+              data = carriers_avoid_cxc_snp) +
     xlab("Generations") +
     ylab("Allele frequency") +
     ggtitle("Allele frequency of lethal (blue) and neutral alleles (grey)")

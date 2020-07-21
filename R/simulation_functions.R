@@ -361,14 +361,43 @@ combined_carriers <- function(simulation_results) {
     carriers    
 }
 
-## Summarise carriers during last generations
+## Summarise carriers during last generations from a set of simulations
 
 get_end_carriers <- function(carriers,
-                             gen_start = 11,
+                             gen_start = 16,
                              gen_end = 20) {
     do(group_by(carriers, replicate),
        data.frame(average_carriers = mean(.$carriers[.$generation %in% gen_start:gen_end]),
                   average_n = mean(.$n[.$generation %in% gen_start:gen_end])))
+}
+
+
+## Summary statistics for end carriers from a set of simulations
+
+end_carrier_stats <- function(end_carriers) {
+    
+    f <- end_carriers$average_carriers/2/end_carriers$average_n
+    
+    data.frame(mean_frequency = mean(f),
+               lower = quantile(f, 0.05),
+               upper = quantile(f, 0.95))
+    
+}
+
+
+## Summary of QTL frequency and lethal frequency for balancing selection cases
+
+get_balancing_stats <- function(simulation_results) {
+
+    founder_variance_explained <- unlist(lapply(simulation_results,
+                                                "[",
+                                                "founder_variance_explained_by_lethal"))
+
+    end_carriers <- get_end_carriers(combined_carriers(simulation_results))
+    
+
+    data.frame(founder_variance_explained = founder_variance_explained,
+               end_carrier_frequency = end_carriers$average_carriers/2/end_carriers$average_n)
 }
 
 
@@ -410,3 +439,21 @@ lethal_frequency_plot <- function(carriers) {
           geom = "line")
 }
 
+
+balancing_stat_plot <- function(balancing_stats) {
+    qplot(x = founder_variance_explained,
+          y = end_carrier_frequency,
+          data = balancing_stats) +
+        xlab("Variance explained in breeding goal in founder population") +
+        ylab("Lethal allele frequency")
+}
+
+
+affected_plot <- function(carriers) {
+    qplot(x = generation,
+          y = cases,
+          data = carriers,
+          colour = replicate,
+          group = replicate,
+          geom = "line")
+}

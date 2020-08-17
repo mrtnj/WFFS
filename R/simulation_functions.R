@@ -74,7 +74,8 @@ pick_lethal <- function(founderpop,
          founder_lethal_frequency = f[lethal_ix])
 }
 
-## Create a founder pouplation and a simulation parameters object
+
+## Create a founder pouplation anda simulation parameters object
 
 make_simulation <- function(n_ind,
                             n_chr,
@@ -101,6 +102,7 @@ make_simulation <- function(n_ind,
     list(founderpop = founders,
          simparam = simparam)   
 }
+
 
 ## Simulate breeding that avoids carrier--carrier matings (but allows
 ## carrier--noncarrier matings on both sides)
@@ -308,10 +310,37 @@ read_results <- function(filenames) {
 
 ## Get genetic trends
 
-get_stats <- function(generations) data.frame(generation = 1:length(generations),
-                                          mean_g = unlist(lapply(generations, meanG)),
-                                          var_g = unlist(lapply(generations, varG)),
-                                          stringsAsFactors = FALSE)
+get_stats <- function(generations) {
+    
+    mean_g <- lapply(generations, meanG)
+    var_g <- lapply(generations, varG)
+    
+    if (length(mean_g[[1]]) == 1) {
+        ## One breeding goal trait
+        stats <- data.frame(generation = 1:length(generations),
+                             mean_g = unlist(mean_g),
+                             var_g = unlist(var_g),
+                             stringsAsFactors = FALSE)
+        
+    } else if (length(mean_g[[1]]) == 2) {
+        mean_g1 <- unlist(lapply(mean_g, "[", 1))
+        mean_g2 <- unlist(lapply(mean_g, "[", 2))
+        
+        var_g1 <- unlist(lapply(var_g, "[", 1))
+        var_g2 <- unlist(lapply(var_g, "[", 4))
+        cor_g <- unlist(lapply(var_g, "[", 2))
+        
+        stats <- data.frame(generation = 1:length(generations),
+                            mean_g1 = mean_g1,
+                            mean_g2 = mean_g2,
+                            var_g1 = var_g1,
+                            var_g2 = var_g2,
+                            cor_g = cor_g,
+                            stringsAsFactors = FALSE)
+    }
+    
+    stats
+}
 
 ## Get combined stats from a list of simulations
 
@@ -379,6 +408,7 @@ end_carrier_stats <- function(end_carriers) {
     f <- end_carriers$average_carriers/2/end_carriers$average_n
     
     data.frame(mean_frequency = mean(f),
+               median_frequency = median(f),
                lower = quantile(f, 0.05),
                upper = quantile(f, 0.95))
     

@@ -75,6 +75,46 @@ pick_lethal <- function(founderpop,
 }
 
 
+## Select sires either with a simple one-trait select or on two breeding
+## goals after given proportion
+
+select_sires <- function(parent_generation,
+                         n_sires,
+                         divergence = FALSE,
+                         prop_goal2 = NULL) {
+    
+    if (!divergence) {
+        sires <- selectInd(pop = parent_generation,
+                           trait = 1,
+                           use = "pheno",
+                           gender = "M",
+                           nInd = n_sires,
+                           simParam = simparam)
+    } else {
+        sires_goal1 <- selectInd(pop = parent_generation,
+                                 trait = 1,
+                                 use = "pheno",
+                                 gender = "M",
+                                 nInd = n_sires * (1 - prop_goal2),
+                                 simParam = simparam)
+        
+        sires_goal2 <- selectInd(pop = parent_generation,
+                                 trait = 2,
+                                 use = "pheno",
+                                 gender = "M",
+                                 nInd = n_sires * prop_goal2,
+                                 simParam = simparam)
+        
+        sires <- c(sires_goal1,
+                   sires_goal2)
+    }
+
+    sires        
+}
+    
+    
+
+
 ## Create a founder pouplation anda simulation parameters object
 
 make_simulation <- function(n_ind,
@@ -103,6 +143,46 @@ make_simulation <- function(n_ind,
          simparam = simparam)   
 }
 
+## Create a founder pouplation and a simulation parameters object
+## with two correlated breeding goal traits
+
+make_simulation_divergence <- function(n_ind,
+                                       n_chr,
+                                       h2,
+                                       corA) {
+    
+    founderpop <- runMacs(nInd = n_ind,
+                          nChr = n_chr,
+                          segSites = 500)
+    
+    simparam <- SimParam$new(founderpop)
+    simparam$restrSegSites(minQtlPerChr = 100,
+                           minSnpPerChr = 400,
+                           overlap = FALSE)
+    simparam$setGender("yes_sys")
+    
+    simparam$addTraitA(nQtlPerChr = 10,
+                       mean = c(0, 0),
+                       var = c(1, 1),
+                       corA = matrix(c(1, corA,
+                                       corA, 1),
+                                     byrow = TRUE,
+                                     ncol = 2,
+                                     nrow = 2))
+    simparam$setVarE(h2 = c(h2, h2))
+    
+    simparam$addSnpChip(nSnpPerChr = 400)
+    
+    founders <- newPop(founderpop,
+                       simParam = simparam)
+    
+    list(founderpop = founders,
+         simparam = simparam)   
+}
+
+
+
+
 
 ## Simulate breeding that avoids carrier--carrier matings (but allows
 ## carrier--noncarrier matings on both sides)
@@ -119,6 +199,8 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
                                              lethal_ix,
                                              lethal_is,
                                              n_sires,
+                                             divergence = FALSE,
+                                             prop_goal2 = NULL,
                                              simparam) {
 
     ## Take all females as dams and split them in carrier/noncarrier
@@ -135,12 +217,11 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
     n_carrier_dams <- sum(dam_carrier_status > 0)
 
     ## Select the top sires and split out noncarriers
-    sires <- selectInd(pop = parent_generation,
-                       trait = 1,
-                       use = "pheno",
-                       gender = "M",
-                       nInd = n_sires,
-                       simParam = simparam)
+    
+    sires <- select_sires(parent_generation,
+                          n_sires,
+                          divergence = divergence,
+                          prop_goal2 = prop_goal2)
 
     sire_carrier_status <- carrier_test(sires,
                                         lethal_ix,
@@ -190,6 +271,8 @@ breed_unknown_lethal <- function(parent_generation,
                                  lethal_ix,
                                  lethal_is,
                                  n_sires,
+                                 divergence = FALSE,
+                                 prop_goal2 = NULL,
                                  simparam) {
     
     ## Exclude dams who are affected
@@ -212,13 +295,10 @@ breed_unknown_lethal <- function(parent_generation,
     
     nonaffected_sires <- potential_sires[sire_carrier_status < 2]
 
-    
-    sires <- selectInd(pop = nonaffected_sires,
-                       trait = 1,
-                       use = "pheno",
-                       gender = "M",
-                       nInd = n_sires,
-                       simParam = simparam)
+    sires <- select_sires(nonaffected_sires,
+                          n_sires,
+                          divergence = divergence,
+                          prop_goal2 = prop_goal2)
     
     
     ## Create matings
@@ -247,6 +327,8 @@ breed_against_lethal <- function(parent_generation,
                                  lethal_ix,
                                  lethal_is,
                                  n_sires,
+                                 divergence = FALSE,
+                                 prop_goal2 = NULL,
                                  simparam) {
     
     ## Exclude dams who are affected
@@ -270,12 +352,10 @@ breed_against_lethal <- function(parent_generation,
     noncarrier_sires <- potential_sires[sire_carrier_status == 0]
     
     
-    sires <- selectInd(pop = noncarrier_sires,
-                       trait = 1,
-                       use = "pheno",
-                       gender = "M",
-                       nInd = n_sires,
-                       simParam = simparam)
+    sires <- select_sires(noncarrier_sires,
+                          n_sires,
+                          divergence = divergence,
+                          prop_goal2 = prop_goal2)
     
     
     ## Create matings

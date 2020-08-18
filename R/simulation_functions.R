@@ -193,6 +193,8 @@ make_simulation_divergence <- function(n_ind,
 ## * lethal_is -- indicator for pleiotropy, either "snp" (neutral variant) or 
 ##                "qtl" for pleiotropy
 ## * n_sires -- number of sires used each generation
+## * divergence -- is the simulation using two goal traits?
+## * prop_goal2 -- proportion sires selected for the second goal trait
 ## * simparam -- simulation parameter object
 
 breed_avoiding_carrier_x_carrier <- function(parent_generation,
@@ -265,6 +267,8 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
 ## * lethal_is -- indicator for pleiotropy, either "snp" (neutral variant) or 
 ##                "qtl" for pleiotropy
 ## * n_sires -- number of sires used each generation
+## * divergence -- is the simulation using two goal traits?
+## * prop_goal2 -- proportion sires selected for the second goal trait
 ## * simparam -- simulation parameter object
 
 breed_unknown_lethal <- function(parent_generation,
@@ -313,6 +317,31 @@ breed_unknown_lethal <- function(parent_generation,
 }
 
 
+## Get top individuals
+
+get_top_sires <- function(population,
+                          proportion,
+                          divergence,
+                          prop_goal2) {
+ 
+    if (!divergence) {
+        threshold <- quantile(population@pheno[, 1],
+                              1 - proportion)
+        top <- population[population@pheno[,1] > threshold]
+    } else {
+        threshold_goal1 <- quantile(population@pheno[, 1],
+                                    1 - proportion)
+        threshold_goal2 <- quantile(population@pheno[, 2],
+                                    1 - proportion)
+        
+        top <- population[population@pheno[, 1] > threshold_goal1 |
+                              population@pheno[, 2] > threshold_goal2]
+    }
+    
+    top
+}
+
+
 ## Breed with selection against carriers
 ##
 ## Parameters:
@@ -321,12 +350,17 @@ breed_unknown_lethal <- function(parent_generation,
 ## * lethal_is -- indicator for pleiotropy, either "snp" (neutral variant) or 
 ##                "qtl" for pleiotropy
 ## * n_sires -- number of sires used each generation
+## * prop_top_exempt -- let the top % of the sires be included even
+##                      if they are carriers
+## * divergence -- is the simulation using two goal traits?
+## * prop_goal2 -- proportion sires selected for the second goal trait
 ## * simparam -- simulation parameter object
 
 breed_against_lethal <- function(parent_generation,
                                  lethal_ix,
                                  lethal_is,
                                  n_sires,
+                                 prop_top_exempt = 0,
                                  divergence = FALSE,
                                  prop_goal2 = NULL,
                                  simparam) {
@@ -351,6 +385,22 @@ breed_against_lethal <- function(parent_generation,
     
     noncarrier_sires <- potential_sires[sire_carrier_status == 0]
     
+    if (prop_top_exempt > 0) {
+        top_sires <- get_top_sires(potential_sires,
+                                   prop_top_exempt,
+                                   divergence,
+                                   prop_goal2)
+        
+        top_sire_carrier_status <- carrier_test(top_sires,
+                                                lethal_ix,
+                                                lethal_is,
+                                                simparam)
+        
+        exempt_carrier_sires <- top_sires[top_sire_carrier_status == 1]
+        
+        noncarrier_sires <- c(noncarrier_sires,
+                              exempt_carrier_sires)
+    }
     
     sires <- select_sires(noncarrier_sires,
                           n_sires,

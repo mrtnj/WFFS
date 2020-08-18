@@ -10,7 +10,6 @@
 library(AlphaSimR)
 
 source("R/simulation_functions.R")
-source("R/simulation_functions_divergence.R")
 
 
 ## Read command line arguments
@@ -38,7 +37,7 @@ print(outfile_results)
 setup <- make_simulation_divergence(n_ind = 6000,
                                     n_chr = 10,
                                     h2 = 0.3,
-                                    corA = 0.6)
+                                    corA = 0.3)
 
 founders <- setup$founderpop
 simparam <- setup$simparam
@@ -93,6 +92,7 @@ for (gen_ix in 2:n_gen) {
                                  lethal_ix,
                                  lethal_is = lethal_is,
                                  n_sires = 300,
+                                 prop_top_exempt = 0.01,
                                  divergence = TRUE,
                                  prop_goal2 = 0.6,
                                  simparam)
@@ -109,6 +109,26 @@ carrier_status <- lapply(generations,
                          simparam)
 
 carriers <- get_carriers(carrier_status)
+
+## Carriers at the 25% top of each goal distribution
+
+carriers$top_goal1_frequency <- 0
+carriers$top_goal2_frequency <- 0
+
+for (gen_ix in 1:length(generations)) {
+    
+    top_goal1_ix <- which(generations[[gen_ix]]@gv[,1] >
+                              quantile(generations[[gen_ix]]@gv[,1], 0.75))
+    
+    top_goal2_ix <- which(generations[[gen_ix]]@gv[,2] >
+                              quantile(generations[[gen_ix]]@gv[,1], 0.75))
+    
+    carriers$top_goal1_frequency[gen_ix] <-
+        sum(carrier_status[[gen_ix]][top_goal1_ix])/2/length(top_goal1_ix)
+    carriers$top_goal2_frequency[gen_ix] <-
+        sum(carrier_status[[gen_ix]][top_goal2_ix])/2/length(top_goal2_ix)
+}
+
 
 stats <- get_stats(generations)
 

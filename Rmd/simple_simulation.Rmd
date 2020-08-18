@@ -52,7 +52,7 @@ generations <- 1:20
 
 ## Basic features of the simulation
 
-Genetic trend
+### Genetic mean trend
 
 ```{r}
 stats_avoid_cxc_snp <- combined_stats(results_avoid_cxc_snp)
@@ -72,7 +72,38 @@ stats_selection_qtl <- combined_stats(results_selection_qtl)
         genetic_trend_plot(stats_selection_qtl))
 ```
 
-Genetic variance
+### Comparison of genetic trends between selection and no carrier--carrier mating
+
+```{r}
+genetic_trend_stats_avoid_cxc_qtl <- summarise(group_by(stats_avoid_cxc_qtl, generation),
+                                               lower = quantile(mean_g, 0.05),
+                                               mean = mean(mean_g),
+                                               upper = quantile(mean_g, 0.95))
+
+genetic_trend_stats_selection_qtl <- summarise(group_by(stats_selection_qtl, generation),
+                                               lower = quantile(mean_g, 0.05),
+                                               mean = mean(mean_g),
+                                               upper = quantile(mean_g, 0.95))
+
+genetic_trend_comparison <- rbind(transform(genetic_trend_stats_avoid_cxc_qtl,
+                                            case = "Avoid carrier--carrier matings"),
+                                  transform(genetic_trend_stats_selection_qtl,
+                                            case = "Selection against carriers"))
+ggplot(data = genetic_trend_comparison) +
+    geom_ribbon(aes(x = generation,
+                    ymin = lower,
+                    y = mean,
+                    ymax = upper,
+                    fill = case),
+                alpha = I(0.5)) +
+    geom_line(aes(x = generation,
+                  y = mean,
+                  colour = case))
+```
+
+
+
+### Genetic variance trend
 
 ```{r}
 (genetic_variance_plot(stats_avoid_cxc_snp))
@@ -116,6 +147,7 @@ freq_formatting <- list(theme(legend.position = "none"),
     
 ```
 
+### Frequency at the end of the simulation
 
 ```{r}
 end_carriers_avoid_cxc_snp <- get_end_carriers(carriers_avoid_cxc_snp)
@@ -149,6 +181,15 @@ qplot(x = case, ymin = lower, ymax = upper, y = mean_frequency,
 ```
 
 
+Frequency in selection scenarios after 5 generations:
+
+```{r}
+mean(filter(carriers_selection_snp, generation == 5)$carriers)/6000/2
+mean(filter(carriers_selection_qtl, generation == 5)$carriers)/6000/2
+```
+
+
+
 ## Relationsip between frequency and QTL effect (balancing selection case)
 
 
@@ -161,11 +202,14 @@ formatting_balancing <- list(xlim(0, 0.015),
                              ylim(0, 0.2))
 
 ((balancing_stat_plot(balancing_stats_avoid_cxc) +
-      formatting_balancing)/
+      formatting_balancing +
+      ggtitle("Frequency and effect on breeding goal with balancing selection") ) /
     (balancing_stat_plot(balancing_stats_unknown) +
-         formatting_balancing) /
+         formatting_balancing +
+         ggtitle("With unknown lethal") ) /
         (balancing_stat_plot(balancing_stats_selection) +
-             formatting_balancing))
+             formatting_balancing +
+             ggtitle("With culling") ))
 ```
 
 
@@ -181,9 +225,11 @@ formatting_affected <- list(ylim(0, ymax),
                             theme(legend.position = "none"))
 
 ((affected_plot(carriers_unknown_snp) + 
-     formatting_affected ) |
+     formatting_affected +
+      ggtitle("Affected without balancing selection") ) /
      (affected_plot(carriers_unknown_qtl) +
-          formatting_affected))
+          formatting_affected +
+          ggtitle("Affected with balancing selection")))
 
 ```
 
@@ -192,7 +238,7 @@ formatting_affected <- list(ylim(0, ymax),
 
 
 
-### Comparison of lethals with neutral variants (baseline case)
+## Comparison of lethals with neutral variants (baseline case)
 
 Example with replicate 1
 

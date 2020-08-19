@@ -15,6 +15,8 @@ source("R/simulation_functions.R")
 ## Read command line arguments
 ## * selection_rule -- tells us what mating rule to use
 ## * lethal_is -- tells us whether to use balancing selection or not
+## * n_top_exempt -- for the case of selection against the lethal, allows
+##                   # of top sires to be included even if they are carriers
 ## * outfile for populations
 ## * outfile for results
 
@@ -23,8 +25,9 @@ args <- commandArgs(trailingOnly = TRUE)
 
 selection_rule <- args[1]
 lethal_is <- args[2]
-outfile_populations <- args[3]
-outfile_results <- args[4]
+n_top_exempt <- as.numeric(args[3])
+outfile_populations <- args[4]
+outfile_results <- args[5]
 
 print(selection_rule)
 print(lethal_is)
@@ -92,7 +95,7 @@ for (gen_ix in 2:n_gen) {
                                  lethal_ix,
                                  lethal_is = lethal_is,
                                  n_sires = 300,
-                                 prop_top_exempt = 0.01,
+                                 n_top_exempt = n_top_exempt,
                                  divergence = TRUE,
                                  prop_goal2 = 0.6,
                                  simparam)
@@ -149,16 +152,25 @@ if (lethal_is == "snp") {
                                stats = stats,
                                lethal_ix = lethal_ix,
                                other_snp_ix = other_snp_ix,
-                               lethal_qtl_effect = simparam$traits[[1]]@addEff[lethal_ix],
-                               other_qtl_effects = simparam$traits[[1]]@addEff[-lethal_ix],
+                               lethal_qtl_effect_goal1 = simparam$traits[[1]]@addEff[lethal_ix],
+                               other_qtl_effects_goal1 = simparam$traits[[1]]@addEff[-lethal_ix],
+                               lethal_qtl_effect_goal2 = simparam$traits[[2]]@addEff[lethal_ix],
+                               other_qtl_effects_goal2 = simparam$traits[[2]]@addEff[-lethal_ix],
                                founder_lethal_frequency = founder_lethal_frequency,
-                               founder_h2 = varG(founders)/varP(founders))
+                               founder_h2_goal1 = varG(founders)[1,1]/varP(founders)[1,1],
+                               founder_h2_goal2 = varG(founders)[2,2]/varP(founders)[2,2])
     
-    simulation_results$founder_variance_explained_by_lethal <-
-        2 * simulation_results$lethal_qtl_effect^2 *
+    simulation_results$founder_variance_explained_by_lethal_goal1 <-
+        2 * simulation_results$lethal_qtl_effect_goal1^2 *
         simulation_results$founder_lethal_frequency *
         (1 - simulation_results$founder_lethal_frequency) *
-        simulation_results$founder_h2
+        simulation_results$founder_h2_goal1
+    
+    simulation_results$founder_variance_explained_by_lethal_goal2 <-
+        2 * simulation_results$lethal_qtl_effect_goal2^2 *
+        simulation_results$founder_lethal_frequency *
+        (1 - simulation_results$founder_lethal_frequency) *
+        simulation_results$founder_h2_goal2
 }
 
 saveRDS(generations,

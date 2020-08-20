@@ -202,9 +202,9 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
                                              lethal_ix,
                                              lethal_is,
                                              n_sires,
+                                             simparam,
                                              divergence = FALSE,
-                                             prop_goal2 = NULL,
-                                             simparam) {
+                                             prop_goal2 = NULL) {
 
     ## Take all females as dams and split them in carrier/noncarrier
     dams <- parent_generation[parent_generation@gender == "F"]
@@ -250,8 +250,8 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
                                                     nCrosses = 2 * carrier_dams@nInd,
                                                     simParam = simparam)
         
-    offspring <- c(carrier_dam_x_noncarrier_sire,
-                   noncarrier_dam_x_any_sire)
+        offspring <- c(carrier_dam_x_noncarrier_sire,
+                       noncarrier_dam_x_any_sire)
     } else {
         offspring <- noncarrier_dam_x_any_sire
     }
@@ -277,9 +277,9 @@ breed_unknown_lethal <- function(parent_generation,
                                  lethal_ix,
                                  lethal_is,
                                  n_sires,
+                                 simparam,
                                  divergence = FALSE,
-                                 prop_goal2 = NULL,
-                                 simparam) {
+                                 prop_goal2 = NULL) {
     
     ## Exclude dams who are affected
     dams <- parent_generation[parent_generation@gender == "F"]
@@ -363,10 +363,10 @@ breed_against_lethal <- function(parent_generation,
                                  lethal_ix,
                                  lethal_is,
                                  n_sires,
+                                 simparam,
                                  n_top_exempt = 0,
                                  divergence = FALSE,
-                                 prop_goal2 = NULL,
-                                 simparam) {
+                                 prop_goal2 = NULL) {
     
     ## Exclude dams who are affected
     dams <- parent_generation[parent_generation@gender == "F"]

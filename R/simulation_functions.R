@@ -81,7 +81,8 @@ pick_lethal <- function(founderpop,
 select_sires <- function(parent_generation,
                          n_sires,
                          divergence = FALSE,
-                         prop_goal2 = NULL) {
+                         prop_goal2 = NULL,
+                         simparam) {
     
     if (!divergence) {
         sires <- selectInd(pop = parent_generation,
@@ -223,7 +224,8 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
     sires <- select_sires(parent_generation,
                           n_sires,
                           divergence = divergence,
-                          prop_goal2 = prop_goal2)
+                          prop_goal2 = prop_goal2,
+                          simparam = simparam)
 
     sire_carrier_status <- carrier_test(sires,
                                         lethal_ix,
@@ -302,7 +304,8 @@ breed_unknown_lethal <- function(parent_generation,
     sires <- select_sires(nonaffected_sires,
                           n_sires,
                           divergence = divergence,
-                          prop_goal2 = prop_goal2)
+                          prop_goal2 = prop_goal2,
+                          simparam = simparam)
     
     
     ## Create matings
@@ -381,7 +384,8 @@ breed_against_lethal <- function(parent_generation,
     selected_sires <- select_sires(potential_sires,
                                    n_sires,
                                    divergence = divergence,
-                                   prop_goal2 = prop_goal2)
+                                   prop_goal2 = prop_goal2,
+                                   simparam = simparam)
     
     sire_carrier_status <- carrier_test(selected_sires,
                                         lethal_ix,

@@ -31,6 +31,7 @@ outfile_results <- args[5]
 
 print(selection_rule)
 print(lethal_is)
+print(n_top_exempt)
 print(outfile_populations)
 print(outfile_results)
 

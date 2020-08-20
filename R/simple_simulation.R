@@ -72,7 +72,7 @@ for (gen_ix in 2:n_gen) {
                                              lethal_ix,
                                              lethal_is = lethal_is,
                                              n_sires = 300,
-                                             simparam)
+                                             simparam = simparam)
         
     } else if (selection_rule == "unknown_lethal") {
         
@@ -81,7 +81,7 @@ for (gen_ix in 2:n_gen) {
                                  lethal_ix,
                                  lethal_is = lethal_is,
                                  n_sires = 300,
-                                 simparam)
+                                 simparam = simparam)
            
     } else if (selection_rule == "selection_against") {
         
@@ -91,7 +91,7 @@ for (gen_ix in 2:n_gen) {
                                  lethal_is = lethal_is,
                                  n_sires = 300,
                                  n_top_exempt = n_top_exempt,
-                                 simparam)
+                                 simparam = simparam)
     }
 }
 

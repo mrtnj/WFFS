@@ -76,7 +76,7 @@ for (gen_ix in 2:n_gen) {
                                              n_sires = 300,
                                              divergence = TRUE,
                                              prop_goal2 = 0.6,
-                                             simparam)
+                                             simparam = simparam)
         
     } else if (selection_rule == "unknown_lethal") {
         
@@ -87,7 +87,7 @@ for (gen_ix in 2:n_gen) {
                                  n_sires = 300,
                                  divergence = TRUE,
                                  prop_goal2 = 0.6,
-                                 simparam)
+                                 simparam = simparam)
            
     } else if (selection_rule == "selection_against") {
         
@@ -99,7 +99,7 @@ for (gen_ix in 2:n_gen) {
                                  n_top_exempt = n_top_exempt,
                                  divergence = TRUE,
                                  prop_goal2 = 0.6,
-                                 simparam)
+                                 simparam = simparam)
     }
 }
 

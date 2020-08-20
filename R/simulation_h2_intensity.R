@@ -58,14 +58,19 @@ for (h2 in c(0.01, 0.1, 0.3)) {
 }
 
 
-writeRDS(results,
+saveRDS(results,
          file = "simulations/simple_simulations/h2_intensity_results.Rds")
         
 
 
-plot_gain <- qplot(y = mean_g, x = generation, colour = paste(h2, sires), data = combined)
+combined <- Reduce(rbind, results)
+
+plot_gain <- qplot(y = mean_g, x = generation, colour = paste(h2, sires), data = combined,
+                   geom = "line")
 
 
 ## Average gain per generation the first ten generations
+
+sd_per_year <- lapply(results, get_sd_per_year)
 
 lapply(sd_per_year, function(x) mean(x[1:10]))

@@ -1,7 +1,7 @@
 
 ## Simple simulation with these features:
 ## * Discrete generations
-## * 3000 females, 200 males
+## * 3000 females, 300 males
 ## * Selection only on the male side
 ## * One fully recessive lethal ~ 5% starting frequency
 ## * No carrier x carrier matings
@@ -24,11 +24,13 @@ args <- commandArgs(trailingOnly = TRUE)
 
 selection_rule <- args[1]
 lethal_is <- args[2]
-outfile_populations <- args[3]
-outfile_results <- args[4]
+n_top_exempt <- as.numeric(args[3])
+outfile_populations <- args[4]
+outfile_results <- args[5]
 
 print(selection_rule)
 print(lethal_is)
+print(n_top_exempt)
 print(outfile_populations)
 print(outfile_results)
 
@@ -88,6 +90,7 @@ for (gen_ix in 2:n_gen) {
                                  lethal_ix,
                                  lethal_is = lethal_is,
                                  n_sires = 300,
+                                 n_top_exempt = n_top_exempt,
                                  simparam)
     }
 }

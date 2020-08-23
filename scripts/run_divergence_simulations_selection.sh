@@ -13,13 +13,13 @@ SELECTION_RULE=selection_against
 
 for LETHAL_IS in snp qtl; do
 
-    for REP in {1..100}; do
-    
-        for N_TOP_EXEMPT in 0 10 100; do
+    for N_TOP_EXEMPT in 0 10 100; do
         
-            if [ ! -d simulations/divergence_simulations/${SELECTION_RULE}_${LETHAL_IS}_${N_TOP_EXEMPT}exempt ]; then
-                mkdir simulations/divergence_simulations/${SELECTION_RULE}_${LETHAL_IS}_${N_TOP_EXEMPT}exempt
-            fi 
+        if [ ! -d simulations/divergence_simulations/${SELECTION_RULE}_${LETHAL_IS}_${N_TOP_EXEMPT}exempt ]; then
+            mkdir simulations/divergence_simulations/${SELECTION_RULE}_${LETHAL_IS}_${N_TOP_EXEMPT}exempt
+        fi 
+            
+        for REP in {1..100}; do
 
             Rscript R/divergence_simulation.R \
                 $SELECTION_RULE \

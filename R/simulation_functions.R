@@ -395,8 +395,11 @@ breed_against_lethal <- function(parent_generation,
     noncarrier_sires <- selected_sires[sire_carrier_status == 0]
     
     ## Create matings
+    matings_with_exempt_sires <- FALSE
     
     if (n_top_exempt > 0) {
+        
+        ## Find out how many exempt sires there are
         top_sires <- get_top_sires(selected_sires,
                                    n_top_exempt,
                                    divergence,
@@ -408,26 +411,34 @@ breed_against_lethal <- function(parent_generation,
                                                 simparam)
         
         exempt_carrier_sires <- top_sires[top_sire_carrier_status == 1]
-        noncarrier_dams <- dams[dam_carrier_status == 0]
         
-        n_exemption_crosses <- exempt_carrier_sires@nInd * 6000/n_sires
-        noncarrier_dam_x_exempt_carrier_sire <-
-            randCross2(females = noncarrier_dams,
-                       males = exempt_carrier_sires,
-                       nProgeny = 1,
-                       nCrosses = n_exemption_crosses,
-                       simParam = simparam)
+        if (exempt_carrier_sires@nInd > 0) {
+            ## There are exempt carrier sires, mate them separately to
+            ## noncarrier dams
+            
+            noncarrier_dams <- dams[dam_carrier_status == 0]
+            
+            n_exemption_crosses <- exempt_carrier_sires@nInd * 6000/n_sires
+            noncarrier_dam_x_exempt_carrier_sire <-
+                randCross2(females = noncarrier_dams,
+                           males = exempt_carrier_sires,
+                           nProgeny = 1,
+                           nCrosses = n_exemption_crosses,
+                           simParam = simparam)
+            
+            nonaffected_dam_x_noncarrier_sire <-
+                randCross2(females = nonaffected_dams,
+                           males = noncarrier_sires,
+                           nCrosses = 6000 - n_exemption_crosses,
+                           simParam = simparam)
         
-        nonaffected_dam_x_noncarrier_sire <-
-            randCross2(females = nonaffected_dams,
-                       males = noncarrier_sires,
-                       nCrosses = 6000 - n_exemption_crosses,
-                       simParam = simparam)
-        
-        offspring <- c(noncarrier_dam_x_exempt_carrier_sire,
-                       nonaffected_dam_x_noncarrier_sire)
-    } else {
-        
+            offspring <- c(noncarrier_dam_x_exempt_carrier_sire,
+                           nonaffected_dam_x_noncarrier_sire)
+            matings_with_exempt_sires <- TRUE
+        }
+    } 
+      
+    if (!matings_with_exempt_sires) {  
         offspring <- randCross2(females = nonaffected_dams,
                                 males = noncarrier_sires,
                                 nProgeny = 1,

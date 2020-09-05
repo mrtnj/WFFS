@@ -337,8 +337,8 @@ get_top_sires <- function(population,
         ranking_goal2 <- order(population@pheno[, 2],
                                decreasing = TRUE)
         
-        top <- population[unique(c(ranking_goal1,
-                                   ranking_goal2))]
+        top <- population[unique(c(ranking_goal1[1:number],
+                                   ranking_goal2[1:number]))]
     }
     
     top

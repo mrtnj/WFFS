@@ -1,0 +1,518 @@
+---
+title: "Simulation with two breeding goals"
+author: "Martin Johnsson"
+output: html_document
+---
+
+
+## Housekeeping
+
+Load packages and simulation results
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+##knitr::opts_knit$set(root.dir = normalizePath(".."))
+```
+
+```{r}
+library(AlphaSimR)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(purrr)
+library(tidyr)
+
+source("R/simulation_functions.R")
+```
+
+```{r}
+results_avoid_cxc_snp <-
+    read_results(system("ls simulations/divergence_simulations/avoid_carrier_x_carrier_snp/results_*.Rds",
+                        intern = TRUE))
+results_avoid_cxc_qtl <- 
+    read_results(system("ls simulations/divergence_simulations/avoid_carrier_x_carrier_qtl/results_*.Rds",
+                        intern = TRUE))
+
+results_unknown_snp <- 
+    read_results(system("ls simulations/divergence_simulations/unknown_lethal_snp/results_*.Rds",
+                        intern = TRUE))
+results_unknown_qtl <- 
+    read_results(system("ls simulations/divergence_simulations/unknown_lethal_qtl/results_*.Rds",
+                        intern = TRUE))
+
+results_selection_snp <- 
+    read_results(system("ls simulations/divergence_simulations/selection_against_snp_0exempt/results_*.Rds",
+                        intern = TRUE))
+results_selection_qtl <- 
+    read_results(system("ls simulations/divergence_simulations/selection_against_qtl_0exempt/results_*.Rds",
+                        intern = TRUE))
+
+results_selection_snp_10exempt <-
+    read_results(system("ls simulations/divergence_simulations/selection_against_snp_10exempt/results_*.Rds",
+                        intern = TRUE))
+results_selection_qtl_10exempt <-
+    read_results(system("ls simulations/divergence_simulations/selection_against_qtl_10exempt/results_*.Rds",
+                        intern = TRUE))
+
+results_selection_snp_100exempt <- 
+    read_results(system("ls simulations/divergence_simulations/selection_against_snp_100exempt/results_*.Rds",
+                        intern = TRUE))
+results_selection_qtl_100exempt <- 
+    read_results(system("ls simulations/divergence_simulations/selection_against_qtl_100exempt/results_*.Rds",
+                        intern = TRUE))
+```
+
+Generation counter
+
+```{r}
+generations <- 1:20
+```
+
+
+
+## Basic features of the simulation
+
+### Genetic mean trend
+
+```{r}
+stats_avoid_cxc_snp <- combined_stats(results_avoid_cxc_snp)
+stats_avoid_cxc_qtl <- combined_stats(results_avoid_cxc_qtl)
+
+stats_unknown_snp <- combined_stats(results_unknown_snp)
+stats_unknown_qtl <- combined_stats(results_unknown_qtl)
+
+stats_selection_snp <- combined_stats(results_selection_snp)
+stats_selection_qtl <- combined_stats(results_selection_qtl)
+
+stats_selection_snp_10exempt <- combined_stats(results_selection_snp_10exempt)
+stats_selection_qtl_10exempt <- combined_stats(results_selection_qtl_10exempt)
+
+stats_selection_snp_100exempt <- combined_stats(results_selection_snp_100exempt)
+stats_selection_qtl_100exempt <- combined_stats(results_selection_qtl_100exempt)
+```
+
+
+
+
+### Genetic variance trend
+
+```{r}
+##(genetic_variance_plot(stats_avoid_cxc_snp))
+```
+
+
+## Allele frequency changes
+
+### Lethal allele frequency
+
+```{r}
+carriers_avoid_cxc_snp <- combined_carriers(results_avoid_cxc_snp)
+carriers_avoid_cxc_qtl <- combined_carriers(results_avoid_cxc_qtl)
+
+carriers_unknown_snp <- combined_carriers(results_unknown_snp)
+carriers_unknown_qtl <- combined_carriers(results_unknown_qtl)
+
+carriers_selection_snp <- combined_carriers(results_selection_snp)
+carriers_selection_qtl <- combined_carriers(results_selection_qtl)
+
+freq_formatting <- list(theme(legend.position = "none"),
+                        ylim(0, 0.2))
+
+((lethal_frequency_plot(carriers_avoid_cxc_snp) +
+      ggtitle("Lethal allele frequency change without balancing selection") +
+      freq_formatting) |
+        (lethal_frequency_plot(carriers_avoid_cxc_qtl) +
+             ggtitle("Lethal allele frequency change with balancing selection") +
+             freq_formatting)) /
+    ((lethal_frequency_plot(carriers_unknown_snp) +
+          ggtitle("Unknown lethal, without balancing selection") +
+          freq_formatting) |
+         (lethal_frequency_plot(carriers_unknown_qtl) +
+              ggtitle("Unknown lethal, with balancing selection") +
+              freq_formatting)) /
+    ((lethal_frequency_plot(carriers_selection_snp) +
+          ggtitle("Culling in sires, without balancing selection") +
+          freq_formatting) |
+         (lethal_frequency_plot(carriers_selection_qtl) +
+              ggtitle("Culling in sires, with balancing selection") +
+              freq_formatting))
+    
+```
+
+### Frequency at the end of the simulation
+
+```{r}
+end_carriers_avoid_cxc_snp <- get_end_carriers(carriers_avoid_cxc_snp)
+end_carriers_avoid_cxc_qtl <- get_end_carriers(carriers_avoid_cxc_qtl)
+
+end_carriers_unknown_snp <- get_end_carriers(carriers_unknown_snp)
+end_carriers_unknown_qtl <- get_end_carriers(carriers_unknown_qtl)
+
+end_carriers_selection_snp <- get_end_carriers(carriers_selection_snp)
+end_carriers_selection_qtl <- get_end_carriers(carriers_selection_qtl)
+
+carrier_stats <- rbind(transform(end_carrier_stats(end_carriers_avoid_cxc_snp),
+                                 case = "Baseline"),
+                       transform(end_carrier_stats(end_carriers_avoid_cxc_qtl),
+                                 case = "Baseline, balancing"),
+                       
+                       transform(end_carrier_stats(end_carriers_unknown_snp),
+                                 case = "Unknown lethal"),
+                       transform(end_carrier_stats(end_carriers_unknown_qtl),
+                                 case = "Unknown lethal, balancing"),
+                       
+                       transform(end_carrier_stats(end_carriers_selection_snp),
+                                 case = "Culling sires"),
+                       transform(end_carrier_stats(end_carriers_selection_qtl),
+                                 case = "Culling sires, balancing"))
+
+qplot(x = case, ymin = lower, ymax = upper, y = mean_frequency,
+      data = carrier_stats,
+      geom = "pointrange") +
+    ggtitle("Lethal frequency in generation 16-20 (5% quantile, mean, 95% quantile)")
+```
+
+
+Frequency in selection scenarios after 5 generations:
+
+```{r}
+mean(filter(carriers_selection_snp, generation == 5)$carriers)/6000/2
+mean(filter(carriers_selection_qtl, generation == 5)$carriers)/6000/2
+```
+
+
+
+
+
+## Simulation figure 1: Lethal allele frequency for (un)known lethal
+
+with and without balancing selection
+
+```{r}
+carriers_combined <- rbind(transform(carriers_avoid_cxc_snp,
+                                     case = "avoid carrier-carrier matings",
+                                     selection = "no balancing selection"),
+                           transform(carriers_avoid_cxc_qtl,
+                                     case = "avoid carrier-carrier matings",
+                                     selection = "balancing selection"),
+                           transform(carriers_unknown_snp,
+                                     case = "no testing",
+                                     selection = "no balancing selection"),
+                           transform(carriers_unknown_qtl,
+                                     case = "no testing",
+                                     selection = "balancing selection"))
+
+carriers_combined_summary <- summarise(group_by(carriers_combined, generation, case, selection),
+                                       average = mean(carriers/n),
+                                       lower = quantile(carriers/n, 0.05),
+                                       upper = quantile(carriers/n, 0.95))
+
+fig1_carrier_frequency <- ggplot() +
+    geom_line(aes(x = generation,
+                  y = carriers/n,
+                  group = paste(replicate, case, selection)),
+              colour = "grey",
+              data = carriers_combined) +
+    geom_pointrange(aes(x = generation,
+                        y = average,
+                        ymin = lower,
+                        ymax = upper),
+                    data = carriers_combined_summary) +
+    theme_bw() +
+    theme(panel.grid = element_blank(),
+          strip.background = element_blank()) +
+    facet_grid(case ~ selection) +
+    ggtitle("Carrier frequency with and without balancing selection") +
+    ylab("Carrier frequency") +
+    xlab("Generations")
+
+fig1_carrier_frequency
+```
+
+```{r}
+pdf("figures/fig1_carrier_frequency.pdf")
+print(fig1_carrier_frequency)
+dev.off()
+```
+
+
+
+## Relationship between frequency and QTL effect (balancing selection case)
+
+
+```{r}
+# balancing_stats_avoid_cxc <- get_balancing_stats(results_avoid_cxc_qtl)
+# balancing_stats_unknown <- get_balancing_stats(results_unknown_qtl)
+# balancing_stats_selection <- get_balancing_stats(results_selection_qtl)
+# 
+# formatting_balancing <- list(xlim(0, 0.015),
+#                              ylim(0, 0.2))
+# 
+# ((balancing_stat_plot(balancing_stats_avoid_cxc) +
+#       formatting_balancing +
+#       ggtitle("Frequency and effect on breeding goal with balancing selection") ) /
+#     (balancing_stat_plot(balancing_stats_unknown) +
+#          formatting_balancing +
+#          ggtitle("With unknown lethal") ) /
+#         (balancing_stat_plot(balancing_stats_selection) +
+#              formatting_balancing +
+#              ggtitle("With culling") ))
+```
+
+
+
+## Number of affected individuals (unknown lethal case)
+
+
+```{r}
+ymax <- max(c(carriers_unknown_qtl$cases,
+              carriers_unknown_snp$cases))
+
+formatting_affected <- list(ylim(0, ymax),
+                            theme(legend.position = "none"))
+
+((affected_plot(carriers_unknown_snp) + 
+     formatting_affected +
+      ggtitle("Affected without balancing selection") ) /
+     (affected_plot(carriers_unknown_qtl) +
+          formatting_affected +
+          ggtitle("Affected with balancing selection")))
+
+```
+
+
+
+## The effect of exempting top carrier sires from selection
+
+```{r}
+carriers_selection_snp_10exempt <- combined_carriers(results_selection_snp_10exempt)
+carriers_selection_qtl_10exempt <- combined_carriers(results_selection_qtl_10exempt)
+
+carriers_selection_snp_100exempt <- combined_carriers(results_selection_snp_100exempt)
+carriers_selection_qtl_100exempt <- combined_carriers(results_selection_qtl_100exempt)
+
+lethal_frequency_plot(carriers_selection_snp) +
+    lethal_frequency_plot(carriers_selection_qtl) +    
+    lethal_frequency_plot(carriers_selection_snp_10exempt) +
+    lethal_frequency_plot(carriers_selection_qtl_10exempt) +
+    lethal_frequency_plot(carriers_selection_snp_100exempt) +
+    lethal_frequency_plot(carriers_selection_qtl_100exempt) +
+    plot_layout(ncol = 2)
+```
+
+
+## Figure 2: Effect of selection against lethal
+
+```{r}
+
+summarise_trend <- function(stats) {
+    summarise(group_by(stats, generation),
+              lower_g1 = quantile(mean_g1, 0.05),
+              average_g1 = mean(mean_g1),
+              upper_g1 = quantile(mean_g1, 0.95),
+              lower_g2 = quantile(mean_g2, 0.05),
+              average_g2 = mean(mean_g2),
+              upper_g2 = quantile(mean_g2, 0.95))
+}
+
+genetic_trend_stats_avoid_cxc_qtl <- summarise_trend(stats_avoid_cxc_qtl)
+genetic_trend_stats_avoid_cxc_snp <- summarise_trend(stats_avoid_cxc_snp)
+
+genetic_trend_stats_selection_snp <- summarise_trend(stats_selection_snp)
+genetic_trend_stats_selection_qtl <- summarise_trend(stats_selection_qtl)
+
+genetic_trend_stats_selection_snp_10exempt <- summarise_trend(stats_selection_snp_10exempt)
+genetic_trend_stats_selection_snp_100exempt <- summarise_trend(stats_selection_snp_100exempt)
+
+genetic_trend_stats_selection_qtl_10exempt <- summarise_trend(stats_selection_qtl_10exempt)
+genetic_trend_stats_selection_qtl_100exempt <- summarise_trend(stats_selection_qtl_100exempt)
+
+
+genetic_trend_comparison <- rbind(transform(genetic_trend_stats_selection_qtl,
+                                            case = "no exemptions",
+                                            selection = "balancing selection"),
+                                  transform(genetic_trend_stats_selection_qtl_10exempt,
+                                            case = "top 10 exempt",
+                                            selection = "balancing selection"),
+                                  transform(genetic_trend_stats_selection_qtl_100exempt,
+                                            case = "top 100 exempt",
+                                            selection = "balancing selection"),
+                                  transform(genetic_trend_stats_selection_snp,
+                                            case = "no exemptions",
+                                            selection = "no balancing selection"),
+                                  transform(genetic_trend_stats_selection_snp_10exempt,
+                                            case = "top 10 exempt",
+                                            selection = "no balancing selection"),
+                                  transform(genetic_trend_stats_selection_snp_100exempt,
+                                            case = "top 100 exempt",
+                                            selection = "no balancing selection"))
+
+
+formatting_fig2 <- list(scale_colour_manual(values = c("#deebf7", "#9ecae1", "#3182bd"),
+                                            name = ""),
+                        theme_bw(),
+                        theme(panel.grid = element_blank(),
+                              strip.background = element_blank()),
+                        xlab("Generation"))
+
+fig2_trend_g1 <- ggplot(data = filter(genetic_trend_comparison, selection == "no balancing selection")) +
+    geom_pointrange(aes(x = generation,
+                        ymin = lower_g1,
+                        y = average_g1,
+                        ymax = upper_g1,
+                        colour = case),
+                    position = position_dodge(width = 1)) +
+    ylim(-1, 8) +
+    formatting_fig2 +
+    theme(legend.position = "none") +
+    ylab("Average genetic value") +
+    ggtitle("Breeding goal 1")
+
+fig2_trend_g2 <- ggplot(data = filter(genetic_trend_comparison, selection == "no balancing selection")) +
+    geom_pointrange(aes(x = generation,
+                        ymin = lower_g2,
+                        y = average_g2,
+                        ymax = upper_g2,
+                        colour = case),
+                    position = position_dodge(width = 1)) +
+    ylim(-1, 8) +
+    formatting_fig2 +
+    theme(legend.position = "right") +
+    ylab("") +
+    ggtitle("Breeding goal 2")
+
+
+
+carriers_combined_selection <- rbind(transform(carriers_selection_qtl,
+                                               case = "no exemptions",
+                                               selection = "balancing selection"),
+                                     transform(carriers_selection_qtl_10exempt,
+                                               case = "top 10 exempt",
+                                               selection = "balancing selection"),
+                                     transform(carriers_selection_qtl_100exempt,
+                                               case = "top 100 exempt",
+                                               selection = "balancing selection"),
+                                     transform(carriers_selection_snp,
+                                               case = "no exemptions",
+                                               selection = "no balancing selection"),
+                                     transform(carriers_selection_snp_10exempt,
+                                               case = "top 10 exempt",
+                                               selection = "no balancing selection"),
+                                     transform(carriers_selection_snp_100exempt,
+                                               case = "top 100 exempt",
+                                               selection = "no balancing selection"))
+
+carriers_combined_selection_summary <- summarise(group_by(carriers_combined_selection, generation, case, selection),
+                                                 average = mean(carriers/n),
+                                                 lower = quantile(carriers/n, 0.05),
+                                                 upper = quantile(carriers/n, 0.95))
+
+
+fig2_carrier_frequency <- ggplot() +
+    geom_pointrange(aes(x = generation,
+                        y = average,
+                        ymin = lower,
+                        ymax = upper,
+                        colour = case),
+                    data = carriers_combined_selection_summary,
+                    position = position_dodge(width = 1)) +
+    facet_wrap(~ selection) +
+    formatting_fig2 +
+    ggtitle("Carrier frequency") +
+    ylab("Carrier frequency")
+
+
+fig2 <- (fig2_trend_g1 + fig2_trend_g2) /
+    fig2_carrier_frequency
+
+fig2
+```
+
+
+
+
+```{r}
+pdf("figures/fig2_selection_against_carriers.pdf")
+print(fig2)
+dev.off()
+```
+
+
+
+
+## Figure 3: Relationship between effect and frequency in balancing selection
+
+```{r}
+balancing_stats_avoid_cxc_qtl <- get_balancing_stats_divergence(results_avoid_cxc_qtl)
+balancing_stats_unknown_qtl <- get_balancing_stats_divergence(results_unknown_qtl)
+
+balancing_stats_combined <- rbind(transform(balancing_stats_avoid_cxc_qtl,
+                                            case = "avoid carrier-carrier matings"),
+                                  transform(balancing_stats_unknown_qtl,
+                                            case = "no testing"))
+
+
+balancing_stats_combined$delta_effect <- balancing_stats_combined$lethal_qtl_effect_g1 -
+    balancing_stats_combined$lethal_qtl_effect_g2 
+balancing_stats_combined$delta_freq <- balancing_stats_combined$top_carrier_frequency_g1 -
+    balancing_stats_combined$top_carrier_frequency_g2
+
+
+formatting_fig3 <- list(theme_bw(),
+                        theme(panel.grid = element_blank()),
+                        scale_colour_manual(values = c("#9ecae1", "#3182bd"),
+                                            name = ""))
+
+fig3_effect_g1 <- qplot(x = lethal_qtl_effect_g1,
+                        y = top_carrier_frequency_g1,
+                        colour = case,
+                        data = balancing_stats_combined) +
+    formatting_fig3 +
+    theme(legend.position = "none") +
+    ggtitle("Breeding goal 1") +
+    ylab("Carrier frequency among top 25%") +
+    xlab("Effect of lethal on breeding goal 1") +
+    ylim(0, 0.3)
+
+fig3_effect_g2 <- qplot(x = lethal_qtl_effect_g2,
+                        y = top_carrier_frequency_g2,
+                        colour = case,
+                        data = balancing_stats_combined) +
+    formatting_fig3 +
+    theme(legend.position = "none") +
+    geom_vline(xintercept = 0, linetype = 2) +
+    ggtitle("Breeding goal 2") +
+    ylab("Carrier frequency among top 25%") +
+    xlab("Effect of lethal on breeding goal 2") +
+    ylim(0, 0.3)
+
+fig3_delta <- qplot(x = delta_effect,
+                    y = delta_freq,
+                    colour = case,
+                    data = balancing_stats_combined) +
+    formatting_fig3 +
+    theme(legend.position = "bottom") +
+    geom_vline(xintercept = 0, linetype = 2) +
+    geom_hline(yintercept = 0, linetype = 2) +
+    ggtitle("Subpopulation difference") +
+    ylab("Difference in frequency") +
+    xlab("Difference in effect")
+
+
+fig3 <- fig3_effect_g1 +
+    fig3_effect_g2 +
+    fig3_delta +
+    plot_layout(ncol = 2,
+                guides = "collect") & theme(legend.position = "bottom")
+
+fig3
+```
+
+
+```{r}
+pdf("figures/fig3_effect_frequency.pdf")
+print(fig3)
+dev.off()
+```
+
+

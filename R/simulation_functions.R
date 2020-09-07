@@ -546,7 +546,8 @@ combined_carriers <- function(simulation_results) {
     n_reps <- length(simulation_results)
     n_generations <- nrow(simulation_results[[1]]$stats)
     
-    carriers <- map_df(simulation_results, function(x) get_carriers(x$carrier_status))
+    # carriers <- map_df(simulation_results, function(x) get_carriers(x$carrier_status))
+    carriers <- map_df(simulation_results, function(x) x$carriers)
     carriers$replicate <- rep(1:n_reps, each = n_generations)
 
     carriers    
@@ -593,6 +594,27 @@ get_balancing_stats <- function(simulation_results) {
 }
 
 
+get_balancing_stats_divergence <- function(simulation_results) {
+    
+    data.frame(founder_variance_explained_g1 = unlist(lapply(simulation_results,
+                                                             "[",
+                                                             "founder_variance_explained_by_lethal_goal1")),
+               founder_variance_explained_g2 = unlist(lapply(simulation_results,
+                                                             "[",
+                                                             "founder_variance_explained_by_lethal_goal2")),
+               lethal_qtl_effect_g1 = unlist(lapply(simulation_results,
+                                                    "[",
+                                                    "lethal_qtl_effect_goal1")),
+               lethal_qtl_effect_g2 = unlist(lapply(simulation_results,
+                                                    "[",
+                                                    "lethal_qtl_effect_goal2")),
+               top_carrier_frequency_g1 = unlist(lapply(simulation_results,
+                                                        function(x) x$carriers$top_goal1_frequency[20])),
+               top_carrier_frequency_g2 = unlist(lapply(simulation_results,
+                                                        function(x) x$carriers$top_goal2_frequency[20])))
+}
+
+
 
 ## Genetic trend plot from stats
 
@@ -607,6 +629,7 @@ genetic_trend_plot <- function(stats) {
           ylab = "Mean genetic value",
           main = "Genetic trend")
 }
+
 
 genetic_variance_plot <- function(stats) {
     qplot(x = generation,

@@ -422,12 +422,17 @@ fig2_carrier_frequency <- ggplot() +
     ylab("Carrier frequency")
 
 
-fig2 <- (fig2_trend_g1 + fig2_trend_g2) /
-    fig2_carrier_frequency
+fig2 <- 
+    fig2_carrier_frequency /
+    (fig2_trend_g1 + fig2_trend_g2)
 
 fig2
 ```
 
+
+```{r}
+filter(carriers_combined_selection_summary, generation == 5)
+```
 
 
 
@@ -498,10 +503,21 @@ fig3_delta <- qplot(x = delta_effect,
     ylab("Difference in frequency") +
     xlab("Difference in effect")
 
+fig3_freq_scatter <- qplot(x = top_carrier_frequency_g1,
+                           y = top_carrier_frequency_g2,
+                           colour = case,
+                           data = balancing_stats_combined) +
+    ggtitle("Subpopulation carrier frequency") +
+    xlab("Carrier frequency among top 25%, goal 1") +
+    ylab("Carrier frequency among top 25%, goal 2") +
+    xlim(0, 0.3) +
+    ylim(0, 0.3) +
+    geom_abline(slope = 1, intercept = 0, linetype = 2) +
+    formatting_fig3
 
 fig3 <- fig3_effect_g1 +
     fig3_effect_g2 +
-    fig3_delta +
+    fig3_freq_scatter +
     plot_layout(ncol = 2,
                 guides = "collect") & theme(legend.position = "bottom")
 

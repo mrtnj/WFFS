@@ -329,22 +329,22 @@ genetic_trend_stats_selection_qtl_100exempt <- summarise_trend(stats_selection_q
 
 
 genetic_trend_comparison <- rbind(transform(genetic_trend_stats_selection_qtl,
-                                            case = "no exemptions",
+                                            case = "no carrier sires",
                                             selection = "balancing selection"),
                                   transform(genetic_trend_stats_selection_qtl_10exempt,
-                                            case = "top 10 exempt",
+                                            case = "allow carriers in top 10",
                                             selection = "balancing selection"),
                                   transform(genetic_trend_stats_selection_qtl_100exempt,
-                                            case = "top 100 exempt",
+                                            case = "allow carriers in top 100",
                                             selection = "balancing selection"),
                                   transform(genetic_trend_stats_selection_snp,
-                                            case = "no exemptions",
+                                            case = "no carrier sires",
                                             selection = "no balancing selection"),
                                   transform(genetic_trend_stats_selection_snp_10exempt,
-                                            case = "top 10 exempt",
+                                            case = "allow carriers in top 10",
                                             selection = "no balancing selection"),
                                   transform(genetic_trend_stats_selection_snp_100exempt,
-                                            case = "top 100 exempt",
+                                            case = "allow carriers in top 100",
                                             selection = "no balancing selection"))
 
 
@@ -384,28 +384,32 @@ fig2_trend_g2 <- ggplot(data = filter(genetic_trend_comparison, selection == "no
 
 
 carriers_combined_selection <- rbind(transform(carriers_selection_qtl,
-                                               case = "no exemptions",
+                                               case = "no carrier sires",
                                                selection = "balancing selection"),
                                      transform(carriers_selection_qtl_10exempt,
-                                               case = "top 10 exempt",
+                                               case = "allow carriers in top 10",
                                                selection = "balancing selection"),
                                      transform(carriers_selection_qtl_100exempt,
-                                               case = "top 100 exempt",
+                                               case = "allow carriers in top 100",
                                                selection = "balancing selection"),
                                      transform(carriers_selection_snp,
-                                               case = "no exemptions",
+                                               case = "no carrier sires",
                                                selection = "no balancing selection"),
                                      transform(carriers_selection_snp_10exempt,
-                                               case = "top 10 exempt",
+                                               case = "allow carriers in top 10",
                                                selection = "no balancing selection"),
                                      transform(carriers_selection_snp_100exempt,
-                                               case = "top 100 exempt",
+                                               case = "allow carriers in top 100",
                                                selection = "no balancing selection"))
 
 carriers_combined_selection_summary <- summarise(group_by(carriers_combined_selection, generation, case, selection),
                                                  average = mean(carriers/n),
                                                  lower = quantile(carriers/n, 0.05),
                                                  upper = quantile(carriers/n, 0.95))
+
+carriers_combined_selection_summary$selection <-
+    factor(carriers_combined_selection_summary$selection,
+           levels = c("no balancing selection", "balancing selection"))
 
 
 fig2_carrier_frequency <- ggplot() +
@@ -515,6 +519,16 @@ fig3_freq_scatter <- qplot(x = top_carrier_frequency_g1,
     geom_abline(slope = 1, intercept = 0, linetype = 2) +
     formatting_fig3
 
+fig3_delta_histogram <- qplot(x = top_carrier_frequency_g1 - top_carrier_frequency_g2,
+                              fill = case,
+                              data = balancing_stats_combined) +
+    formatting_fig3 +
+    scale_fill_manual(values = c("#9ecae1", "#3182bd")) +
+    geom_vline(xintercept = 0, linetype = 2) +
+    theme(legend.position = "none") +
+    xlab("Difference in carrier frequency between top 25%,\n breeding goal 1 - breeding goal 2")
+    
+
 fig3 <- fig3_effect_g1 +
     fig3_effect_g2 +
     fig3_freq_scatter +
@@ -523,6 +537,35 @@ fig3 <- fig3_effect_g1 +
 
 fig3
 ```
+
+Delta frequency:
+
+```{r}
+delta_f <- balancing_stats_combined$top_carrier_frequency_g1 - balancing_stats_combined$top_carrier_frequency_g2
+mean(delta_f)
+quantile(delta_f, c(0.05, 0.95))
+```
+
+Case without balancing selection:
+
+```{r}
+carriers_avoid_cxc_snp20 <- filter(carriers_avoid_cxc_snp, generation == 20)
+carriers_unknown_snp20 <- filter(carriers_unknown_snp, generation == 20)
+delta_f_snp_avoid_cxc <- carriers_avoid_cxc_snp20$top_goal1_frequency -
+    carriers_avoid_cxc_snp20$top_goal2_frequency
+delta_f_snp_unknown <- carriers_unknown_snp20$top_goal1_frequency -
+    carriers_unknown_snp20$top_goal2_frequency
+
+mean(delta_f_snp_avoid_cxc)
+quantile(delta_f_snp_avoid_cxc, c(0.05, 0.95))
+
+mean(delta_f_snp_unknown)
+quantile(delta_f_snp_unknown, c(0.05, 0.95))
+
+```
+
+
+
 
 
 ```{r}

@@ -36,10 +36,24 @@ results_unknown_snp <- read_results(system("ls simulations/simple_simulations/un
 results_unknown_qtl <- read_results(system("ls simulations/simple_simulations/unknown_lethal_qtl/results_*.Rds",
                                            intern = TRUE))
 
-results_selection_snp <- read_results(system("ls simulations/simple_simulations/selection_against_snp/results_*.Rds",
+results_selection_snp <- read_results(system("ls simulations/simple_simulations/selection_against_snp_0exempt/results_*.Rds",
                                              intern = TRUE))
-results_selection_qtl <- read_results(system("ls simulations/simple_simulations/selection_against_qtl/results_*.Rds",
+results_selection_qtl <- read_results(system("ls simulations/simple_simulations/selection_against_qtl_0exempt/results_*.Rds",
                                              intern = TRUE))
+
+results_selection_snp_10exempt <-
+    read_results(system("ls simulations/simple_simulations/selection_against_snp_10exempt/results_*.Rds",
+                        intern = TRUE))
+results_selection_qtl_10exempt <-
+    read_results(system("ls simulations/simple_simulations/selection_against_qtl_10exempt/results_*.Rds",
+                        intern = TRUE))
+
+results_selection_snp_100exempt <- 
+    read_results(system("ls simulations/simple_simulations/selection_against_snp_100exempt/results_*.Rds",
+                        intern = TRUE))
+results_selection_qtl_100exempt <- 
+    read_results(system("ls simulations/simple_simulations/selection_against_qtl_100exempt/results_*.Rds",
+                        intern = TRUE))
 ```
 
 Generation counter
@@ -64,6 +78,12 @@ stats_unknown_qtl <- combined_stats(results_unknown_qtl)
 stats_selection_snp <- combined_stats(results_selection_snp)
 stats_selection_qtl <- combined_stats(results_selection_qtl)
 
+stats_selection_snp_10exempt <- combined_stats(results_selection_snp_10exempt)
+stats_selection_qtl_10exempt <- combined_stats(results_selection_qtl_10exempt)
+
+stats_selection_snp_100exempt <- combined_stats(results_selection_snp_100exempt)
+stats_selection_qtl_100exempt <- combined_stats(results_selection_qtl_100exempt)
+
 (genetic_trend_plot(stats_avoid_cxc_qtl) |
         genetic_trend_plot(stats_avoid_cxc_qtl)) /
     (genetic_trend_plot(stats_unknown_snp) |
@@ -85,17 +105,41 @@ genetic_trend_stats_selection_qtl <- summarise(group_by(stats_selection_qtl, gen
                                                mean = mean(mean_g),
                                                upper = quantile(mean_g, 0.95))
 
+genetic_trend_stats_selection_snp_10exempt <- summarise(group_by(stats_selection_snp_10exempt, generation),
+                                                        lower = quantile(mean_g, 0.05),
+                                                        mean = mean(mean_g),
+                                                        upper = quantile(mean_g, 0.95))
+
+genetic_trend_stats_selection_snp_100exempt <- summarise(group_by(stats_selection_snp_100exempt, generation),
+                                                         lower = quantile(mean_g, 0.05),
+                                                         mean = mean(mean_g),
+                                                         upper = quantile(mean_g, 0.95))
+
+genetic_trend_stats_selection_qtl_10exempt <- summarise(group_by(stats_selection_qtl_10exempt, generation),
+                                                        lower = quantile(mean_g, 0.05),
+                                                        mean = mean(mean_g),
+                                                        upper = quantile(mean_g, 0.95))
+
+genetic_trend_stats_selection_qtl_100exempt <- summarise(group_by(stats_selection_qtl_100exempt, generation),
+                                                       lower = quantile(mean_g, 0.05),
+                                                       mean = mean(mean_g),
+                                                       upper = quantile(mean_g, 0.95))
+
 genetic_trend_comparison <- rbind(transform(genetic_trend_stats_avoid_cxc_qtl,
                                             case = "Avoid carrier--carrier matings"),
                                   transform(genetic_trend_stats_selection_qtl,
-                                            case = "Selection against carriers"))
+                                            case = "Selection against carriers"),
+                                  transform(genetic_trend_stats_selection_qtl_10exempt,
+                                            case = "Selection against carriers, top 10 exempt"),
+                                  transform(genetic_trend_stats_selection_qtl_100exempt,
+                                            case = "Selection against carriers, top 100 exempt"))
 ggplot(data = genetic_trend_comparison) +
     geom_ribbon(aes(x = generation,
                     ymin = lower,
                     y = mean,
                     ymax = upper,
                     fill = case),
-                alpha = I(0.5)) +
+                alpha = I(0.2)) +
     geom_line(aes(x = generation,
                   y = mean,
                   colour = case))
@@ -232,6 +276,27 @@ formatting_affected <- list(ylim(0, ymax),
           ggtitle("Affected with balancing selection")))
 
 ```
+
+
+
+## The effect of exempting top carrier sires from selection
+
+```{r}
+carriers_selection_snp_10exempt <- combined_carriers(results_selection_snp_10exempt)
+carriers_selection_qtl_10exempt <- combined_carriers(results_selection_qtl_10exempt)
+
+carriers_selection_snp_100exempt <- combined_carriers(results_selection_snp_100exempt)
+carriers_selection_qtl_100exempt <- combined_carriers(results_selection_qtl_100exempt)
+
+lethal_frequency_plot(carriers_selection_snp) +
+    lethal_frequency_plot(carriers_selection_qtl) +    
+    lethal_frequency_plot(carriers_selection_snp_10exempt) +
+    lethal_frequency_plot(carriers_selection_qtl_10exempt) +
+    lethal_frequency_plot(carriers_selection_snp_100exempt) +
+    lethal_frequency_plot(carriers_selection_qtl_100exempt) +
+    plot_layout(ncol = 2)
+```
+
 
 
 

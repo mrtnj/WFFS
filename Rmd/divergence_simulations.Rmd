@@ -235,6 +235,10 @@ print(fig1_carrier_frequency)
 dev.off()
 ```
 
+```{r}
+filter(carriers_combined_summary, generation == 20)
+```
+
 
 
 ## Relationship between frequency and QTL effect (balancing selection case)
@@ -328,7 +332,10 @@ genetic_trend_stats_selection_qtl_10exempt <- summarise_trend(stats_selection_qt
 genetic_trend_stats_selection_qtl_100exempt <- summarise_trend(stats_selection_qtl_100exempt)
 
 
-genetic_trend_comparison <- rbind(transform(genetic_trend_stats_selection_qtl,
+genetic_trend_comparison <- rbind(transform(genetic_trend_stats_avoid_cxc_qtl,
+                                            case = "no selection",
+                                            selection = "balancing selection"),
+                                  transform(genetic_trend_stats_selection_qtl,
                                             case = "no carrier sires",
                                             selection = "balancing selection"),
                                   transform(genetic_trend_stats_selection_qtl_10exempt,
@@ -337,6 +344,9 @@ genetic_trend_comparison <- rbind(transform(genetic_trend_stats_selection_qtl,
                                   transform(genetic_trend_stats_selection_qtl_100exempt,
                                             case = "allow carriers in top 100",
                                             selection = "balancing selection"),
+                                  transform(genetic_trend_stats_avoid_cxc_snp,
+                                            case = "no selection",
+                                            selection = "no balancing selection"),
                                   transform(genetic_trend_stats_selection_snp,
                                             case = "no carrier sires",
                                             selection = "no balancing selection"),
@@ -348,33 +358,37 @@ genetic_trend_comparison <- rbind(transform(genetic_trend_stats_selection_qtl,
                                             selection = "no balancing selection"))
 
 
-formatting_fig2 <- list(scale_colour_manual(values = c("#deebf7", "#9ecae1", "#3182bd"),
+formatting_fig2 <- list(scale_colour_manual(values = c("#bdd7e7", "#6baed6", "#3182bd", "#08519c"),
                                             name = ""),
                         theme_bw(),
                         theme(panel.grid = element_blank(),
                               strip.background = element_blank()),
                         xlab("Generation"))
 
-fig2_trend_g1 <- ggplot(data = filter(genetic_trend_comparison, selection == "no balancing selection")) +
+fig2_trend_g1 <- ggplot(data = filter(genetic_trend_comparison, selection == "no balancing selection" &
+                                          generation %in% c(1, seq(from = 5, to = 20, by = 5)))) +
     geom_pointrange(aes(x = generation,
                         ymin = lower_g1,
                         y = average_g1,
                         ymax = upper_g1,
                         colour = case),
-                    position = position_dodge(width = 1)) +
+                    size = 0.3,
+                    position = position_dodge(width = 2)) +
     ylim(-1, 8) +
     formatting_fig2 +
     theme(legend.position = "none") +
     ylab("Average genetic value") +
     ggtitle("Breeding goal 1")
 
-fig2_trend_g2 <- ggplot(data = filter(genetic_trend_comparison, selection == "no balancing selection")) +
+fig2_trend_g2 <- ggplot(data = filter(genetic_trend_comparison, selection == "no balancing selection" &
+                                          generation %in% c(1, seq(from = 5, to = 20, by = 5)))) +
     geom_pointrange(aes(x = generation,
                         ymin = lower_g2,
                         y = average_g2,
                         ymax = upper_g2,
                         colour = case),
-                    position = position_dodge(width = 1)) +
+                    size = 0.3,
+                    position = position_dodge(width = 2)) +
     ylim(-1, 8) +
     formatting_fig2 +
     theme(legend.position = "right") +
@@ -383,7 +397,10 @@ fig2_trend_g2 <- ggplot(data = filter(genetic_trend_comparison, selection == "no
 
 
 
-carriers_combined_selection <- rbind(transform(carriers_selection_qtl,
+carriers_combined_selection <- rbind(transform(carriers_avoid_cxc_qtl,
+                                               case = "no selection",
+                                               selection = "balancing selection"),
+                                     transform(carriers_selection_qtl,
                                                case = "no carrier sires",
                                                selection = "balancing selection"),
                                      transform(carriers_selection_qtl_10exempt,
@@ -392,6 +409,9 @@ carriers_combined_selection <- rbind(transform(carriers_selection_qtl,
                                      transform(carriers_selection_qtl_100exempt,
                                                case = "allow carriers in top 100",
                                                selection = "balancing selection"),
+                                     transform(carriers_avoid_cxc_snp,
+                                               case = "no selection",
+                                               selection = "no balancing selection"),
                                      transform(carriers_selection_snp,
                                                case = "no carrier sires",
                                                selection = "no balancing selection"),
@@ -418,6 +438,7 @@ fig2_carrier_frequency <- ggplot() +
                         ymin = lower,
                         ymax = upper,
                         colour = case),
+                    size = 0.3,
                     data = carriers_combined_selection_summary,
                     position = position_dodge(width = 1)) +
     facet_wrap(~ selection) +
@@ -443,6 +464,52 @@ filter(carriers_combined_selection_summary, generation == 5)
 ```{r}
 pdf("figures/fig2_selection_against_carriers.pdf")
 print(fig2)
+dev.off()
+```
+
+Supplementary figure on the effect of balancing selection
+
+```{r}
+
+fig_supp_g1 <- ggplot(data = filter(genetic_trend_comparison, 
+                                          generation %in% c(1, seq(from = 5, to = 20, by = 5)))) +
+    geom_pointrange(aes(x = generation,
+                        ymin = lower_g1,
+                        y = average_g1,
+                        ymax = upper_g1,
+                        colour = case),
+                    size = 0.3,
+                    position = position_dodge(width = 2)) +
+    ylim(-1, 8) +
+    facet_wrap(~ selection) +
+    formatting_fig2 +
+    theme(legend.position = "none") +
+    ylab("Average genetic value") +
+    ggtitle("Breeding goal 1")
+
+fig_supp_g2 <- ggplot(data = filter(genetic_trend_comparison, 
+                                          generation %in% c(1, seq(from = 5, to = 20, by = 5)))) +
+    geom_pointrange(aes(x = generation,
+                        ymin = lower_g2,
+                        y = average_g2,
+                        ymax = upper_g2,
+                        colour = case),
+                    size = 0.3,
+                    position = position_dodge(width = 2)) +
+    facet_wrap(~ selection) +
+    ylim(-1, 8) +
+    formatting_fig2 +
+    theme(legend.position = "bottom") +
+    ylab("") +
+    ggtitle("Breeding goal 2")
+
+fig_supp_selection <- 
+    (fig_supp_g1 / fig_supp_g2)
+
+fig_supp_selection
+
+pdf("figures/suppl_fig_selection_against_carriers_balancing.pdf")
+print(fig_supp_selection)
 dev.off()
 ```
 

@@ -39,6 +39,8 @@ print(outfile_results)
 
 setup <- make_simulation(n_ind = 6000,
                          n_chr = 10,
+                         n_qtl = 10,
+                         n_snp = 400,
                          h2 = 0.3)
 
 founders <- setup$founderpop

@@ -39,7 +39,9 @@ print(outfile_results)
 ## Set up simulation
 
 setup <- make_simulation_divergence(n_ind = 6000,
-                                    n_chr = 10,
+                                    n_chr = 30,
+                                    n_qtl = 3,
+                                    n_snp = 130,
                                     h2 = 0.3,
                                     corA = 0.3)
 

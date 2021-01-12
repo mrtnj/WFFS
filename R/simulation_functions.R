@@ -120,6 +120,8 @@ select_sires <- function(parent_generation,
 
 make_simulation <- function(n_ind,
                             n_chr,
+                            n_qtl,
+                            n_snp,
                             h2) {
     
     founderpop <- runMacs(nInd = n_ind,
@@ -132,10 +134,10 @@ make_simulation <- function(n_ind,
                            overlap = FALSE)
     simparam$setGender("yes_sys")
     
-    simparam$addTraitA(nQtlPerChr = 10)
+    simparam$addTraitA(nQtlPerChr = n_qtl)
     simparam$setVarE(h2 = h2)
     
-    simparam$addSnpChip(nSnpPerChr = 400)
+    simparam$addSnpChip(nSnpPerChr = n_snp)
     
     founders <- newPop(founderpop,
                        simParam = simparam)
@@ -149,6 +151,8 @@ make_simulation <- function(n_ind,
 
 make_simulation_divergence <- function(n_ind,
                                        n_chr,
+                                       n_qtl,
+                                       n_snp,
                                        h2,
                                        corA) {
     
@@ -162,7 +166,7 @@ make_simulation_divergence <- function(n_ind,
                            overlap = FALSE)
     simparam$setGender("yes_sys")
     
-    simparam$addTraitA(nQtlPerChr = 10,
+    simparam$addTraitA(nQtlPerChr = n_qtl,
                        mean = c(0, 0),
                        var = c(1, 1),
                        corA = matrix(c(1, corA,
@@ -172,7 +176,7 @@ make_simulation_divergence <- function(n_ind,
                                      nrow = 2))
     simparam$setVarE(h2 = c(h2, h2))
     
-    simparam$addSnpChip(nSnpPerChr = 400)
+    simparam$addSnpChip(nSnpPerChr = n_snp)
     
     founders <- newPop(founderpop,
                        simParam = simparam)

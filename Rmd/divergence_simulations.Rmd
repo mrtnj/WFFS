@@ -101,6 +101,15 @@ stats_selection_qtl_100exempt <- combined_stats(results_selection_qtl_100exempt)
 ```
 
 
+### Genetic correlation in base population
+
+```{r}
+summary(filter(stats_avoid_cxc_snp, generation == 1)$cor_g)
+qplot(filter(stats_avoid_cxc_snp, generation == 1)$cor_g)
+```
+
+
+
 ## Allele frequency changes
 
 ### Lethal allele frequency
@@ -238,6 +247,7 @@ dev.off()
 ```{r}
 filter(carriers_combined_summary, generation == 20)
 ```
+
 
 
 
@@ -397,19 +407,7 @@ fig2_trend_g2 <- ggplot(data = filter(genetic_trend_comparison, selection == "no
 
 
 
-carriers_combined_selection <- rbind(transform(carriers_avoid_cxc_qtl,
-                                               case = "no selection",
-                                               selection = "balancing selection"),
-                                     transform(carriers_selection_qtl,
-                                               case = "no carrier sires",
-                                               selection = "balancing selection"),
-                                     transform(carriers_selection_qtl_10exempt,
-                                               case = "allow carriers in top 10",
-                                               selection = "balancing selection"),
-                                     transform(carriers_selection_qtl_100exempt,
-                                               case = "allow carriers in top 100",
-                                               selection = "balancing selection"),
-                                     transform(carriers_avoid_cxc_snp,
+carriers_combined_selection <- rbind(transform(carriers_avoid_cxc_snp,
                                                case = "no selection",
                                                selection = "no balancing selection"),
                                      transform(carriers_selection_snp,
@@ -420,7 +418,19 @@ carriers_combined_selection <- rbind(transform(carriers_avoid_cxc_qtl,
                                                selection = "no balancing selection"),
                                      transform(carriers_selection_snp_100exempt,
                                                case = "allow carriers in top 100",
-                                               selection = "no balancing selection"))
+                                               selection = "no balancing selection"),
+                                     transform(carriers_avoid_cxc_qtl,
+                                               case = "no selection",
+                                               selection = "balancing selection"),
+                                     transform(carriers_selection_qtl,
+                                               case = "no carrier sires",
+                                               selection = "balancing selection"),
+                                     transform(carriers_selection_qtl_10exempt,
+                                               case = "allow carriers in top 10",
+                                               selection = "balancing selection"),
+                                     transform(carriers_selection_qtl_100exempt,
+                                               case = "allow carriers in top 100",
+                                               selection = "balancing selection"))
 
 carriers_combined_selection_summary <- summarise(group_by(carriers_combined_selection, generation, case, selection),
                                                  average = mean(carriers/n),
@@ -500,16 +510,54 @@ fig_supp_g2 <- ggplot(data = filter(genetic_trend_comparison,
     ylim(-1, 8) +
     formatting_fig2 +
     theme(legend.position = "bottom") +
-    ylab("") +
+    ylab("Average genetic value") +
     ggtitle("Breeding goal 2")
 
 fig_supp_selection <- 
     (fig_supp_g1 / fig_supp_g2)
 
 fig_supp_selection
+```
 
+```{r}
 pdf("figures/suppl_fig_selection_against_carriers_balancing.pdf")
 print(fig_supp_selection)
+dev.off()
+```
+
+
+
+## Alternative figure for selection against carriers in the style of Fig 1
+
+```{r}
+fig2_alt_carrier_frequency <- ggplot() +
+    geom_line(aes(x = generation,
+                  y = carriers/n,
+                  group = paste(replicate, case, selection)),
+              colour = "grey",
+              data = filter(carriers_combined_selection,
+                            case != "no selection")) +
+    geom_pointrange(aes(x = generation,
+                        y = average,
+                        ymin = lower,
+                        ymax = upper),
+                    data = filter(carriers_combined_selection_summary,
+                                  case != "no selection")) +
+    theme_bw() +
+    theme(panel.grid = element_blank(),
+          strip.background = element_blank()) +
+    facet_grid(case ~ selection) +
+    ggtitle("Carrier frequency with and without balancing selection") +
+    ylab("Carrier frequency") +
+    xlab("Generations")
+
+fig2_alt_carrier_frequency
+
+```
+
+```{r}
+pdf("figures/alt_fig2_selection_against_carriers.pdf")
+print(fig2_alt_carrier_frequency)
 dev.off()
 ```
 

@@ -21,6 +21,8 @@ for (h2 in c(0.01, 0.1, 0.3)) {
         
         setup <- make_simulation(n_ind = 6000,
                                  n_chr = 10,
+                                 n_qtl = 10,
+                                 n_snp = 400,
                                  h2 = h2)
         
         founders <- setup$founderpop

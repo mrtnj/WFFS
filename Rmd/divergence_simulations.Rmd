@@ -11,7 +11,7 @@ Load packages and simulation results
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-##knitr::opts_knit$set(root.dir = normalizePath(".."))
+knitr::opts_knit$set(root.dir = normalizePath(".."))
 ```
 
 ```{r}
@@ -688,5 +688,25 @@ pdf("figures/fig3_effect_frequency.pdf")
 print(fig3)
 dev.off()
 ```
+
+
+## Effect on the breeding goals in the first generations of selection
+
+```{r}
+stats_split_sel <- split(stats_selection_qtl, stats_selection_qtl$replicate)
+stats_split_nosel <- split(stats_avoid_cxc_qtl, stats_avoid_cxc_qtl$replicate)
+
+gain_generation1 <- function(stats_split) {
+    map_dfr(seq_along(stats_split),
+            function(i) data.frame(g1 = stats_split[[i]]$mean_g1[2] - stats_split[[i]]$mean_g1[1],
+                                   g2 = stats_split[[i]]$mean_g2[2] - stats_split[[i]]$mean_g2[1]))
+}
+
+gain_generation1_sel <- gain_generation1(stats_split_sel)
+gain_generation1_nosel <- gain_generation1(stats_split_nosel)
+                  
+```
+
+
 
 

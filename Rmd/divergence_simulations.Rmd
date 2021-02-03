@@ -675,7 +675,7 @@ fig3 <- fig3_effect_g1 +
   fig3_freq_scatter +
   plot_layout(ncol = 2,
               guides = "collect") +
-  plot_annotation(tag.levels = "A") & theme(legend.position = "bottom")
+  plot_annotation(tag_levels = "A") & theme(legend.position = "bottom")
 
 fig3
 ```

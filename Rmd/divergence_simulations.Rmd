@@ -148,6 +148,9 @@ freq_formatting <- list(theme(legend.position = "none"),
     
 ```
 
+
+
+
 ### Frequency at the end of the simulation
 
 ```{r}
@@ -181,15 +184,34 @@ qplot(x = case, ymin = lower, ymax = upper, y = mean_frequency,
     ggtitle("Lethal frequency in generation 16-20 (5% quantile, mean, 95% quantile)")
 ```
 
+Mean of carrier frequency in generation 20:
 
-Frequency in selection scenarios after 5 generations:
+```{r}
+mean(filter(carriers_avoid_cxc_snp, generation == 20)$carriers/6000)
+mean(filter(carriers_avoid_cxc_qtl, generation == 20)$carriers/6000)
+
+mean(filter(carriers_unknown_snp, generation == 20)$carriers/6000)
+mean(filter(carriers_unknown_qtl, generation == 20)$carriers/6000)
+```
+
+
+Standard deviation of carrier frequency in generation 20:
+
+```{r}
+sd(filter(carriers_avoid_cxc_snp, generation == 20)$carriers/6000)
+sd(filter(carriers_avoid_cxc_qtl, generation == 20)$carriers/6000)
+
+sd(filter(carriers_unknown_snp, generation == 20)$carriers/6000)
+sd(filter(carriers_unknown_qtl, generation == 20)$carriers/6000)
+```
+
+
+Frequency in selection scenarios in generation 5:
 
 ```{r}
 mean(filter(carriers_selection_snp, generation == 5)$carriers)/6000/2
 mean(filter(carriers_selection_qtl, generation == 5)$carriers)/6000/2
 ```
-
-
 
 
 
@@ -369,7 +391,11 @@ genetic_trend_comparison <- rbind(transform(genetic_trend_stats_avoid_cxc_qtl,
 
 
 formatting_fig2 <- list(scale_colour_manual(values = c("#bdd7e7", "#6baed6", "#3182bd", "#08519c"),
-                                            name = ""),
+                                            name = "",
+                                            breaks = c("no selection",
+                                                       "allow carriers in top 100",
+                                                       "allow carriers in top 10",
+                                                       "no carrier sires")),
                         theme_bw(),
                         theme(panel.grid = element_blank(),
                               strip.background = element_blank()),
@@ -645,10 +671,11 @@ fig3_delta_histogram <- qplot(x = top_carrier_frequency_g1 - top_carrier_frequen
     
 
 fig3 <- fig3_effect_g1 +
-    fig3_effect_g2 +
-    fig3_freq_scatter +
-    plot_layout(ncol = 2,
-                guides = "collect") & theme(legend.position = "bottom")
+  fig3_effect_g2 +
+  fig3_freq_scatter +
+  plot_layout(ncol = 2,
+              guides = "collect") +
+  plot_annotation(tag.levels = "A") & theme(legend.position = "bottom")
 
 fig3
 ```

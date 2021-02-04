@@ -683,8 +683,8 @@ fig3
 Alternative fig 3 with regression lines:
 
 ```{r}
-fig3_alt <- (fig3_effect_g1 + geom_smooth(method = lm, se = FALSE)) + 
-  (fig3_effect_g2 + geom_smooth(method = lm, se = FALSE)) +
+fig3_alt <- (fig3_effect_g1 + geom_smooth(method = lm, se = FALSE, show.legend = FALSE)) + 
+  (fig3_effect_g2 + geom_smooth(method = lm, se = FALSE, show.legend = FALSE)) +
   fig3_freq_scatter +
   plot_layout(ncol = 2,
               guides = "collect") +

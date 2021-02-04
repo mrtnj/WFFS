@@ -680,6 +680,20 @@ fig3 <- fig3_effect_g1 +
 fig3
 ```
 
+Alternative fig 3 with regression lines:
+
+```{r}
+fig3_alt <- (fig3_effect_g1 + geom_smooth(method = lm, se = FALSE)) + 
+  (fig3_effect_g2 + geom_smooth(method = lm, se = FALSE)) +
+  fig3_freq_scatter +
+  plot_layout(ncol = 2,
+              guides = "collect") +
+  plot_annotation(tag_levels = "A") & theme(legend.position = "bottom")
+
+fig3_alt
+```
+
+
 Delta frequency:
 
 ```{r}
@@ -715,6 +729,13 @@ pdf("figures/fig3_effect_frequency.pdf")
 print(fig3)
 dev.off()
 ```
+
+```{r}
+pdf("figures/fig3_effect_frequency_alt.pdf")
+print(fig3_alt)
+dev.off()
+```
+
 
 
 ## Effect on the breeding goals in the first generations of selection

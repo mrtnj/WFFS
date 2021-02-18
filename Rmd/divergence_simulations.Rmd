@@ -401,35 +401,38 @@ formatting_fig2 <- list(scale_colour_manual(values = c("#bdd7e7", "#6baed6", "#3
                               strip.background = element_blank()),
                         xlab("Generation"))
 
-fig2_trend_g1 <- ggplot(data = filter(genetic_trend_comparison, selection == "no balancing selection" &
-                                          generation %in% c(1, seq(from = 5, to = 20, by = 5)))) +
-    geom_pointrange(aes(x = generation,
-                        ymin = lower_g1,
-                        y = average_g1,
-                        ymax = upper_g1,
-                        colour = case),
-                    size = 0.3,
-                    position = position_dodge(width = 2)) +
-    ylim(-1, 8) +
-    formatting_fig2 +
-    theme(legend.position = "none") +
-    ylab("Average genetic value") +
-    ggtitle("Breeding goal 1")
 
-fig2_trend_g2 <- ggplot(data = filter(genetic_trend_comparison, selection == "no balancing selection" &
-                                          generation %in% c(1, seq(from = 5, to = 20, by = 5)))) +
+## Reformat for combined trend figure
+
+genetic_trend_comparison_g1 <- genetic_trend_comparison[, c(1:4, 8:9)]
+genetic_trend_comparison_g2 <- genetic_trend_comparison[, c(1, 5:9)]
+
+genetic_trend_comparison_g1$goal <- "Breeding goal 1"
+genetic_trend_comparison_g2$goal <- "Breeding goal 2"
+
+colnames(genetic_trend_comparison_g1)[2:4] <- c("lower", "average", "upper")
+colnames(genetic_trend_comparison_g2)[2:4] <- c("lower", "average", "upper")
+
+genetic_trend_comparison_long <- rbind(genetic_trend_comparison_g1,
+                                       genetic_trend_comparison_g2)
+
+
+fig2_trend <- ggplot(data = filter(genetic_trend_comparison_long,
+                                   selection == "no balancing selection" &
+                                   generation %in% c(1, seq(from = 5, to = 20, by = 5)))) +
     geom_pointrange(aes(x = generation,
-                        ymin = lower_g2,
-                        y = average_g2,
-                        ymax = upper_g2,
+                        ymin = lower,
+                        y = average,
+                        ymax = upper,
                         colour = case),
                     size = 0.3,
                     position = position_dodge(width = 2)) +
     ylim(-1, 8) +
+    facet_wrap(~ goal) +
     formatting_fig2 +
     theme(legend.position = "right") +
     ylab("") +
-    ggtitle("Breeding goal 2")
+    ggtitle("Genetic trend")
 
 
 
@@ -485,7 +488,7 @@ fig2_carrier_frequency <- ggplot() +
 
 fig2 <- 
     fig2_carrier_frequency /
-    (fig2_trend_g1 + fig2_trend_g2)
+    fig2_trend
 
 fig2
 ```

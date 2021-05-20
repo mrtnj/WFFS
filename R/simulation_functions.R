@@ -76,10 +76,15 @@ pick_lethal <- function(founderpop,
 
 
 ## Select sires either with a simple one-trait select or on two breeding
-## goals after given proportion
+## goals after given proportion.
+## Parameters:
+## * parent generation
+## * number of sires
+## * offspring distribution expressed as offspring per sire for each decile
 
 select_sires <- function(parent_generation,
                          n_sires,
+                         offspring_distribution,
                          divergence = FALSE,
                          prop_goal2 = NULL,
                          simparam) {
@@ -88,29 +93,49 @@ select_sires <- function(parent_generation,
         sires <- selectInd(pop = parent_generation,
                            trait = 1,
                            use = "pheno",
-                           gender = "M",
+                           sex = "M",
                            nInd = n_sires,
                            simParam = simparam)
+        
+        ## Assign offspring numbers by breeding values
+        offspring_per_sire <- rep(offspring_distribution,
+                                  each = n_sires/10)
+        offspring_per_sire <- offspring_per_sire[order(sires@pheno[,1],
+                                                       decreasing = FALSE)]
     } else {
         sires_goal1 <- selectInd(pop = parent_generation,
                                  trait = 1,
                                  use = "pheno",
-                                 gender = "M",
+                                 sex = "M",
                                  nInd = n_sires * (1 - prop_goal2),
                                  simParam = simparam)
+        
+        offspring_per_sire_goal1 <- rep(offspring_distribution,
+                                        each = n_sires * (1 - prop_goal2) / 10)
+        offspring_per_sire_goal1 <- offspring_per_sire_goal1[order(sires_goal1@pheno[,1],
+                                                                   decreasing = FALSE)]
         
         sires_goal2 <- selectInd(pop = parent_generation,
                                  trait = 2,
                                  use = "pheno",
-                                 gender = "M",
+                                 sex = "M",
                                  nInd = n_sires * prop_goal2,
                                  simParam = simparam)
         
+        offspring_per_sire_goal2 <- rep(offspring_distribution,
+                                        each = n_sires * prop_goal2 / 10)
+        offspring_per_sire_goal2 <- offspring_per_sire_goal2[order(sires_goal2@pheno[,2],
+                                                                   decreasing = FALSE)]
+        
         sires <- c(sires_goal1,
                    sires_goal2)
+        
+        offspring_per_sire <- c(offspring_per_sire_goal1,
+                                offspring_per_sire_goal2)
     }
 
-    sires        
+    list(sires = sires,
+         offspring_per_sire = offspring_per_sire)
 }
     
     
@@ -132,7 +157,7 @@ make_simulation <- function(n_ind,
     simparam$restrSegSites(minQtlPerChr = 100,
                            minSnpPerChr = 400,
                            overlap = FALSE)
-    simparam$setGender("yes_sys")
+    simparam$setSexes("yes_sys")
     
     simparam$addTraitA(nQtlPerChr = n_qtl)
     simparam$setVarE(h2 = h2)
@@ -164,7 +189,7 @@ make_simulation_divergence <- function(n_ind,
     simparam$restrSegSites(minQtlPerChr = 100,
                            minSnpPerChr = 400,
                            overlap = FALSE)
-    simparam$setGender("yes_sys")
+    simparam$setSexes("yes_sys")
     
     simparam$addTraitA(nQtlPerChr = n_qtl,
                        mean = c(0, 0),
@@ -186,6 +211,36 @@ make_simulation_divergence <- function(n_ind,
 }
 
 
+## Create crosses between selected males and females, based on a vector of
+## the number of offspring per sire, which should be based on the offspring
+## distribution and the rank of the sire
+
+make_crosses <- function(females,
+                         males,
+                         offspring_per_sire,
+                         simParam = simparam) {
+  
+  n_offspring <- sum(offspring_per_sire)
+  
+  cross_plan <- data.frame(female_ix = numeric(n_offspring),
+                           male_ix = numeric(n_offspring))
+  
+  ## Sample females with replacement
+  cross_plan$female_ix <- sample.int(n = females@nInd,
+                                     size = n_offspring,
+                                     replace = TRUE)
+  
+  ## Repeat each sire index as many times as he needs offspring
+  cross_plan$male_ix <- unlist(mapply(function(x, i) rep(x, i),
+                                      1:males@nInd,
+                                      offspring_per_sire,
+                                      SIMPLIFY = FALSE))
+  makeCross2(females,
+             males,
+             cross_plan,
+             nProgeny = 1,
+             simParam = simparam)
+}
 
 
 
@@ -206,12 +261,13 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
                                              lethal_ix,
                                              lethal_is,
                                              n_sires,
+                                             offspring_distribution,
                                              simparam,
                                              divergence = FALSE,
                                              prop_goal2 = NULL) {
 
     ## Take all females as dams and split them in carrier/noncarrier
-    dams <- parent_generation[parent_generation@gender == "F"]
+    dams <- parent_generation[parent_generation@sex == "F"]
 
     dam_carrier_status <- carrier_test(dams,
                                        lethal_ix,
@@ -225,39 +281,47 @@ breed_avoiding_carrier_x_carrier <- function(parent_generation,
 
     ## Select the top sires and split out noncarriers
     
-    sires <- select_sires(parent_generation,
-                          n_sires,
-                          divergence = divergence,
-                          prop_goal2 = prop_goal2,
-                          simparam = simparam)
+    sire_selection <- select_sires(parent_generation,
+                                   n_sires,
+                                   offspring_distribution = offspring_distribution,
+                                   divergence = divergence,
+                                   prop_goal2 = prop_goal2,
+                                   simparam = simparam)
+    
+    sires <- sire_selection$sires
+    offspring_per_sire <- sire_selection$offspring_per_sire
 
     sire_carrier_status <- carrier_test(sires,
                                         lethal_ix,
                                         lethal_is,
                                         simparam)
-
+    
+    carrier_sires <- sires[sire_carrier_status > 0]
+    carrier_offspring_per_sire <- offspring_per_sire[sire_carrier_status > 0]
+    
+    n_carrier_sires <- sum(sire_carrier_status > 0)
+    
     noncarrier_sires <- sires[sire_carrier_status == 0]
+    noncarrier_offspring_per_sire <- offspring_per_sire[sire_carrier_status == 0]
 
     ## Create matings for noncarrier/noncarrier and carrier/noncarrier separately
     ## Splitting matings proportionally between the groups
     
-    noncarrier_dam_x_any_sire <- randCross2(females = noncarrier_dams,
-                                            males = sires,
-                                            nProgeny = 1,
-                                            nCrosses = 2 * noncarrier_dams@nInd,
-                                            simParam = simparam)
-
-    if (n_carrier_dams > 0) {
-        carrier_dam_x_noncarrier_sire <- randCross2(females = carrier_dams,
-                                                    males = noncarrier_sires,
-                                                    nProgeny = 1,
-                                                    nCrosses = 2 * carrier_dams@nInd,
+    noncarrier_sire_x_any_dam <- make_crosses(females = dams, 
+                                              males = noncarrier_sires,
+                                              offspring_per_sire = noncarrier_offspring_per_sire,
+                                              simParam = simparam)
+    
+    if (n_carrier_sires > 0) {
+      carrier_sire_x_noncarrier_dam <- make_crosses(females = noncarrier_dams, 
+                                                    males = carrier_sires,
+                                                    offspring_per_sire = carrier_offspring_per_sire,
                                                     simParam = simparam)
-        
-        offspring <- c(carrier_dam_x_noncarrier_sire,
-                       noncarrier_dam_x_any_sire)
+      
+      offspring <- c(carrier_sire_x_noncarrier_dam,
+                     noncarrier_sire_x_any_dam)
     } else {
-        offspring <- noncarrier_dam_x_any_sire
+        offspring <- noncarrier_sire_x_any_dam
     }
     
     offspring
@@ -281,12 +345,13 @@ breed_unknown_lethal <- function(parent_generation,
                                  lethal_ix,
                                  lethal_is,
                                  n_sires,
+                                 offspring_distribution,
                                  simparam,
                                  divergence = FALSE,
                                  prop_goal2 = NULL) {
     
     ## Exclude dams who are affected
-    dams <- parent_generation[parent_generation@gender == "F"]
+    dams <- parent_generation[parent_generation@sex == "F"]
     
     dam_carrier_status <- carrier_test(dams,
                                        lethal_ix,
@@ -296,7 +361,7 @@ breed_unknown_lethal <- function(parent_generation,
     nonaffected_dams <- dams[dam_carrier_status < 2]
     
     ## Exclude sires who are affected
-    potential_sires <- parent_generation[parent_generation@gender == "M"]
+    potential_sires <- parent_generation[parent_generation@sex == "M"]
     
     sire_carrier_status <- carrier_test(potential_sires,
                                         lethal_ix,
@@ -305,20 +370,22 @@ breed_unknown_lethal <- function(parent_generation,
     
     nonaffected_sires <- potential_sires[sire_carrier_status < 2]
 
-    sires <- select_sires(nonaffected_sires,
-                          n_sires,
-                          divergence = divergence,
-                          prop_goal2 = prop_goal2,
-                          simparam = simparam)
-    
+    sire_selection <- select_sires(nonaffected_sires,
+                                   n_sires,
+                                   divergence = divergence,
+                                   prop_goal2 = prop_goal2,
+                                   offspring_distribution = offspring_distribution,
+                                   simparam = simparam)
+
+    sires <- sire_selection$sires
+    offspring_per_sire <- sire_selection$offspring_per_sire
     
     ## Create matings
     
-    offspring <- randCross2(females = nonaffected_dams,
-                            males = sires,
-                            nProgeny = 1,
-                            nCrosses = 6000,
-                            simParam = simparam)
+    offspring <- make_crosses(females = nonaffected_dams,
+                              males = sires,
+                              offspring_per_sire = offspring_per_sire,
+                              simParam = simparam)
     
     offspring
 }
@@ -334,15 +401,18 @@ get_top_sires <- function(population,
     if (!divergence) {
         ranking <- order(population@pheno[, 1],
                       decreasing = TRUE)
-        top <- population[ranking[1:number]]
+        to_include <- ranking[1:number]
+        top <- population[to_include]
+        
     } else {
         ranking_goal1 <- order(population@pheno[, 1],
                                decreasing = TRUE)
         ranking_goal2 <- order(population@pheno[, 2],
                                decreasing = TRUE)
         
-        top <- population[unique(c(ranking_goal1[1:number],
-                                   ranking_goal2[1:number]))]
+        to_include <- unique(c(ranking_goal1[1:number],
+                               ranking_goal2[1:number]))
+        top <- population[to_include]
     }
     
     top
@@ -367,13 +437,14 @@ breed_against_lethal <- function(parent_generation,
                                  lethal_ix,
                                  lethal_is,
                                  n_sires,
+                                 offspring_distribution,
                                  simparam,
                                  n_top_exempt = 0,
                                  divergence = FALSE,
                                  prop_goal2 = NULL) {
     
     ## Exclude dams who are affected
-    dams <- parent_generation[parent_generation@gender == "F"]
+    dams <- parent_generation[parent_generation@sex == "F"]
     
     dam_carrier_status <- carrier_test(dams,
                                        lethal_ix,
@@ -383,70 +454,91 @@ breed_against_lethal <- function(parent_generation,
     nonaffected_dams <- dams[dam_carrier_status < 2]
     
     ## Exclude sires who are affected or carriers
-    potential_sires <- parent_generation[parent_generation@gender == "M"]
+    potential_sires <- parent_generation[parent_generation@sex == "M"]
     
-    selected_sires <- select_sires(potential_sires,
-                                   n_sires,
-                                   divergence = divergence,
-                                   prop_goal2 = prop_goal2,
-                                   simparam = simparam)
+    potential_sire_carrier_status <- carrier_test(potential_sires,
+                                                  lethal_ix,
+                                                  lethal_is,
+                                                  simparam)
     
-    sire_carrier_status <- carrier_test(selected_sires,
-                                        lethal_ix,
-                                        lethal_is,
-                                        simparam)
-    
-    noncarrier_sires <- selected_sires[sire_carrier_status == 0]
+    noncarrier_potential_sires <- potential_sires[potential_sire_carrier_status == 0]
     
     ## Create matings
     matings_with_exempt_sires <- FALSE
     
     if (n_top_exempt > 0) {
-        
-        ## Find out how many exempt sires there are
-        top_sires <- get_top_sires(selected_sires,
-                                   n_top_exempt,
-                                   divergence,
-                                   prop_goal2)
-        
-        top_sire_carrier_status <- carrier_test(top_sires,
-                                                lethal_ix,
-                                                lethal_is,
-                                                simparam)
-        
-        exempt_carrier_sires <- top_sires[top_sire_carrier_status == 1]
-        
-        if (exempt_carrier_sires@nInd > 0) {
-            ## There are exempt carrier sires, mate them separately to
-            ## noncarrier dams
-            
-            noncarrier_dams <- dams[dam_carrier_status == 0]
-            
-            n_exemption_crosses <- exempt_carrier_sires@nInd * 6000/n_sires
-            noncarrier_dam_x_exempt_carrier_sire <-
-                randCross2(females = noncarrier_dams,
-                           males = exempt_carrier_sires,
-                           nProgeny = 1,
-                           nCrosses = n_exemption_crosses,
-                           simParam = simparam)
-            
-            nonaffected_dam_x_noncarrier_sire <-
-                randCross2(females = nonaffected_dams,
-                           males = noncarrier_sires,
-                           nCrosses = 6000 - n_exemption_crosses,
-                           simParam = simparam)
-        
-            offspring <- c(noncarrier_dam_x_exempt_carrier_sire,
-                           nonaffected_dam_x_noncarrier_sire)
-            matings_with_exempt_sires <- TRUE
-        }
-    } 
       
-    if (!matings_with_exempt_sires) {  
-        offspring <- randCross2(females = nonaffected_dams,
+      ## Find out how many exempt sires there are
+      top_sires <- get_top_sires(potential_sires,
+                                 number = n_top_exempt,
+                                 divergence = divergence,
+                                 prop_goal2 = prop_goal2)
+      
+      
+      top_sire_carrier_status <- carrier_test(top_sires,
+                                              lethal_ix,
+                                              lethal_is,
+                                              simparam)
+      
+      exempt_carrier_sires <- top_sires[top_sire_carrier_status == 1]
+      
+      if (exempt_carrier_sires@nInd > 0) {
+        ## There are exempt carrier sires, mate them separately to
+        ## noncarrier dams
+        
+        noncarrier_dams <- dams[dam_carrier_status == 0]
+        
+        sire_selection <- select_sires(c(noncarrier_potential_sires,
+                                         exempt_carrier_sires),
+                                       n_sires,
+                                       divergence = divergence,
+                                       offspring_distribution = offspring_distribution,
+                                       prop_goal2 = prop_goal2,
+                                       simparam = simparam)
+        
+        sire_carrier_status <- carrier_test(sire_selection$sires,
+                                            lethal_ix,
+                                            lethal_is,
+                                            simparam)
+        
+        noncarrier_sires <- sire_selection$sires[sire_carrier_status == 0]
+        noncarrier_offspring_per_sire <- sire_selection$offspring_per_sire[sire_carrier_status == 0]
+        
+        exempt_carrier_sires <- sire_selection$sires[sire_carrier_status == 1]
+        exempt_offspring_per_sire <- sire_selection$offspring_per_sire[sire_carrier_status == 1]
+        
+        noncarrier_dam_x_exempt_carrier_sire <-
+          make_crosses(females = noncarrier_dams,
+                       males = exempt_carrier_sires,
+                       offspring_per_sire = exempt_offspring_per_sire,
+                       simParam = simparam)
+        
+        nonaffected_dam_x_noncarrier_sire <-
+          make_crosses(females = nonaffected_dams,
+                       males = noncarrier_sires,
+                       offspring_per_sire = noncarrier_offspring_per_sire,
+                       simParam = simparam)
+        
+        offspring <- c(noncarrier_dam_x_exempt_carrier_sire,
+                       nonaffected_dam_x_noncarrier_sire)
+        matings_with_exempt_sires <- TRUE
+      }
+    } 
+    
+    if (!matings_with_exempt_sires) {
+      sire_selection <- select_sires(noncarrier_potential_sires,
+                                     n_sires,
+                                     divergence = divergence,
+                                     offspring_distribution = offspring_distribution,
+                                     prop_goal2 = prop_goal2,
+                                     simparam = simparam)
+      
+      noncarrier_sires <- sire_selection$sires
+      noncarrier_offspring_per_sire <- sire_selection$offspring_per_sire
+      
+      offspring <- make_crosses(females = nonaffected_dams,
                                 males = noncarrier_sires,
-                                nProgeny = 1,
-                                nCrosses = 6000,
+                                offspring_per_sire = noncarrier_offspring_per_sire,
                                 simParam = simparam)
     }
     

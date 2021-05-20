@@ -38,25 +38,48 @@ print(outfile_results)
 
 ## Set up simulation
 
-setup <- make_simulation_divergence(n_ind = 6000,
-                                    n_chr = 30,
-                                    n_qtl = 3,
-                                    n_snp = 130,
-                                    h2 = 0.3,
-                                    corA = 0.3)
+found_lethal <- FALSE
+k <- 0
 
-founders <- setup$founderpop
-simparam <- setup$simparam
+while (!found_lethal) {
+    k <- k + 1
+    print(k)
+    setup <- make_simulation_divergence(n_ind = 6000,
+                                        n_chr = 30,
+                                        n_qtl = 3,
+                                        n_snp = 130,
+                                        h2 = 0.3,
+                                        corA = 0.3)
+    
+    founders <- setup$founderpop
+    simparam <- setup$simparam
+    
+    ## Pick a lethal variant; try--catch in case simulation does not have a candidate
+    ## with appropriate frequency
+    
+    chosen_lethal <- tryCatch({
+    
+        pick_lethal(founders,
+                    lethal_is = lethal_is,
+                    simparam)    
+    },
+    error = function(cond) return(NULL))
+    
+    if (!is.null(chosen_lethal)) {
+        ## Successfully found lethal; move on
+        found_lethal <- TRUE   
+    }
+}
 
-
-## Pick a lethal variant
-
-chosen_lethal <- pick_lethal(founders,
-                             lethal_is = lethal_is,
-                             simparam)
 lethal_ix <- chosen_lethal$lethal_ix
 other_snp_ix <- chosen_lethal$other_snp_ix
 founder_lethal_frequency <- chosen_lethal$founder_lethal_frequency
+
+
+## Set offspring distribution
+
+offspring_distribution <- c(1, 1, 1, 3, 4,
+                            7, 13, 19, 35, 116)
 
 
 ## Breeding simulation
@@ -76,6 +99,7 @@ for (gen_ix in 2:n_gen) {
                                              lethal_ix,
                                              lethal_is = lethal_is,
                                              n_sires = 300,
+                                             offspring_distribution = offspring_distribution,
                                              divergence = TRUE,
                                              prop_goal2 = 0.6,
                                              simparam = simparam)
@@ -87,6 +111,7 @@ for (gen_ix in 2:n_gen) {
                                  lethal_ix,
                                  lethal_is = lethal_is,
                                  n_sires = 300,
+                                 offspring_distribution = offspring_distribution,
                                  divergence = TRUE,
                                  prop_goal2 = 0.6,
                                  simparam = simparam)
@@ -99,6 +124,7 @@ for (gen_ix in 2:n_gen) {
                                  lethal_is = lethal_is,
                                  n_sires = 300,
                                  n_top_exempt = n_top_exempt,
+                                 offspring_distribution = offspring_distribution,
                                  divergence = TRUE,
                                  prop_goal2 = 0.6,
                                  simparam = simparam)

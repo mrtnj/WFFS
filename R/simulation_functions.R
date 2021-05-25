@@ -586,7 +586,9 @@ get_stats <- function(generations) {
         
         var_g1 <- unlist(lapply(var_g, "[", 1))
         var_g2 <- unlist(lapply(var_g, "[", 4))
-        cor_g <- unlist(lapply(var_g, "[", 2))
+        cov_g <- unlist(lapply(var_g, "[", 2))
+        
+        cor_g <- cov_g / (sqrt(var_g1) * sqrt(var_g2))
         
         stats <- data.frame(generation = 1:length(generations),
                             mean_g1 = mean_g1,

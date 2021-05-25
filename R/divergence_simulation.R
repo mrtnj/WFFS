@@ -45,7 +45,7 @@ while (!found_lethal) {
     k <- k + 1
     print(k)
     setup <- make_simulation_divergence(n_ind = 6000,
-                                        n_chr = 30,
+                                        n_chr = 1,
                                         n_qtl = 3,
                                         n_snp = 130,
                                         h2 = 0.3,
@@ -142,25 +142,40 @@ carrier_status <- lapply(generations,
 
 carriers <- get_carriers(carrier_status)
 
-## Carriers at the 25% top of each goal distribution
+## Carriers at the 10% top of each goal distribution
 
 carriers$top_goal1_frequency <- 0
 carriers$top_goal2_frequency <- 0
 
 for (gen_ix in 1:length(generations)) {
     
-    top_goal1_ix <- which(generations[[gen_ix]]@gv[,1] >
-                              quantile(generations[[gen_ix]]@gv[,1], 0.75))
+    rank_goal1_ix <- order(generations[[gen_ix]]@gv[,1],
+                            decreasing = TRUE)
+    top_goal1_ix <- rank_goal1_ix[1:(length(rank_goal1_ix) * 0.1)]
     
-    top_goal2_ix <- which(generations[[gen_ix]]@gv[,2] >
-                              quantile(generations[[gen_ix]]@gv[,1], 0.75))
+    rank_goal2_ix <- order(generations[[gen_ix]]@gv[,2],
+                           decreasing = TRUE)
+    top_goal2_ix <- rank_goal2_ix[1:(length(rank_goal2_ix) * 0.1)]
     
     carriers$top_goal1_frequency[gen_ix] <-
         sum(carrier_status[[gen_ix]][top_goal1_ix])/2/length(top_goal1_ix)
     carriers$top_goal2_frequency[gen_ix] <-
         sum(carrier_status[[gen_ix]][top_goal2_ix])/2/length(top_goal2_ix)
+    
 }
 
+## Carrier sires actually used
+
+carriers$carrier_sires_used <- 0
+
+for (gen_ix in 1:(length(generations) - 1)) {
+    
+    sires_used_id <- unique(generations[[gen_ix + 1]]@father)
+    sires_used_ix <- which(generations[[gen_ix]]@id %in% sires_used_id)
+    
+    carriers$carrier_sires_used[gen_ix] <- sum(carrier_status[[gen_ix]][sires_used_ix] == 1)
+
+}
 
 stats <- get_stats(generations)
 

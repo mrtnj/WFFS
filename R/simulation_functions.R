@@ -159,7 +159,9 @@ make_simulation <- function(n_ind,
                            overlap = FALSE)
     simparam$setSexes("yes_sys")
     
-    simparam$addTraitA(nQtlPerChr = n_qtl)
+    simparam$addTraitA(nQtlPerChr = n_qtl,
+                       mean = 100,
+                       var = 20^2)
     simparam$setVarE(h2 = h2)
     
     simparam$addSnpChip(nSnpPerChr = n_snp)
@@ -192,8 +194,8 @@ make_simulation_divergence <- function(n_ind,
     simparam$setSexes("yes_sys")
     
     simparam$addTraitA(nQtlPerChr = n_qtl,
-                       mean = c(0, 0),
-                       var = c(1, 1),
+                       mean = c(100, 100),
+                       var = c(20^2, 20^2),
                        corA = matrix(c(1, corA,
                                        corA, 1),
                                      byrow = TRUE,

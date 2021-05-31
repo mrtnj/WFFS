@@ -45,7 +45,7 @@ while (!found_lethal) {
     k <- k + 1
     print(k)
     setup <- make_simulation_divergence(n_ind = 6000,
-                                        n_chr = 1,
+                                        n_chr = 30,
                                         n_qtl = 3,
                                         n_snp = 130,
                                         h2 = 0.3,

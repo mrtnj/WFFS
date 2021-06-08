@@ -618,7 +618,7 @@ fig3_effect_g1 <- qplot(x = lethal_qtl_effect_g1,
     theme(legend.position = "none") +
     ggtitle("Breeding goal 1") +
     ylab("Carrier frequency among top 25%") +
-    xlab("Effect of lethal on breeding goal 1") +
+    xlab("Effect of lethal on breeding goal 1") ##+
     ## ylim(0, 0.3) TO SET
 
 fig3_effect_g2 <- qplot(x = lethal_qtl_effect_g2,
@@ -631,7 +631,7 @@ fig3_effect_g2 <- qplot(x = lethal_qtl_effect_g2,
   geom_vline(xintercept = 0, linetype = 2) +
   ggtitle("Breeding goal 2") +
   ylab("Carrier frequency among top 25%") +
-  xlab("Effect of lethal on breeding goal 2") +
+  xlab("Effect of lethal on breeding goal 2") ##+
   ## ylim(0, 0.3) TO SET
 
 fig3_freq_scatter <- qplot(x = top_carrier_frequency_g1,

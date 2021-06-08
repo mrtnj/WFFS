@@ -102,7 +102,6 @@ plot_genetic_correlation <- qplot(x = generation,
                                   group = replicate,
                                   data = stats_avoid_cxc_snp) +
   geom_smooth(method = lm,
-              group = NULL,
               se = FALSE) +
   theme_bw() +
   theme(panel.grid = element_blank()) 

@@ -101,7 +101,9 @@ plot_genetic_correlation <- qplot(x = generation,
                                   geom = "line",
                                   group = replicate,
                                   data = stats_avoid_cxc_snp) +
-  geom_smooth(method = lm) +
+  geom_smooth(method = lm,
+              group = NULL,
+              se = FALSE) +
   theme_bw() +
   theme(panel.grid = element_blank()) 
 
@@ -109,9 +111,12 @@ plot_genetic_correlation
 ```
 
 
+```{r}
 pdf("figures/supplementary_fig_genetic_correlation.pdf")
 print(plot_genetic_correlation)
 dev.off()
+```
+
 
 
 ## Allele frequency changes

@@ -93,21 +93,25 @@ stats_selection_qtl_100exempt <- combined_stats(results_selection_qtl_100exempt)
 
 
 
-
-### Genetic variance trend
+### Evolution of genetic correlation
 
 ```{r}
-##(genetic_variance_plot(stats_avoid_cxc_snp))
+plot_genetic_correlation <- qplot(x = generation,
+                                  y = cor_g,
+                                  geom = "line",
+                                  group = replicate,
+                                  data = stats_avoid_cxc_snp) +
+  geom_smooth(method = lm) +
+  theme_bw() +
+  theme(panel.grid = element_blank()) 
+
+plot_genetic_correlation
 ```
 
 
-### Genetic correlation in base population
-
-```{r}
-summary(filter(stats_avoid_cxc_snp, generation == 1)$cor_g)
-qplot(filter(stats_avoid_cxc_snp, generation == 1)$cor_g)
-```
-
+pdf("figures/supplementary_fig_genetic_correlation.pdf")
+print(plot_genetic_correlation)
+dev.off()
 
 
 ## Allele frequency changes
@@ -127,25 +131,26 @@ carriers_selection_qtl <- combined_carriers(results_selection_qtl)
 freq_formatting <- list(theme(legend.position = "none"),
                         ylim(0, 0.2))
 
-((lethal_frequency_plot(carriers_avoid_cxc_snp) +
-      ggtitle("Lethal allele frequency change without balancing selection") +
+plot_freq <- ((lethal_frequency_plot(carriers_avoid_cxc_snp) +
+                 ggtitle("Lethal allele frequency change without balancing selection") +
+                 freq_formatting) |
+                (lethal_frequency_plot(carriers_avoid_cxc_qtl) +
+                   ggtitle("Lethal allele frequency change with balancing selection") +
+                   freq_formatting)) /
+  ((lethal_frequency_plot(carriers_unknown_snp) +
+      ggtitle("Unknown lethal, without balancing selection") +
       freq_formatting) |
-        (lethal_frequency_plot(carriers_avoid_cxc_qtl) +
-             ggtitle("Lethal allele frequency change with balancing selection") +
-             freq_formatting)) /
-    ((lethal_frequency_plot(carriers_unknown_snp) +
-          ggtitle("Unknown lethal, without balancing selection") +
-          freq_formatting) |
-         (lethal_frequency_plot(carriers_unknown_qtl) +
-              ggtitle("Unknown lethal, with balancing selection") +
-              freq_formatting)) /
-    ((lethal_frequency_plot(carriers_selection_snp) +
-          ggtitle("Culling in sires, without balancing selection") +
-          freq_formatting) |
-         (lethal_frequency_plot(carriers_selection_qtl) +
-              ggtitle("Culling in sires, with balancing selection") +
-              freq_formatting))
-    
+     (lethal_frequency_plot(carriers_unknown_qtl) +
+        ggtitle("Unknown lethal, with balancing selection") +
+        freq_formatting)) /
+  ((lethal_frequency_plot(carriers_selection_snp) +
+      ggtitle("Culling in sires, without balancing selection") +
+      freq_formatting) |
+     (lethal_frequency_plot(carriers_selection_qtl) +
+        ggtitle("Culling in sires, with balancing selection") +
+        freq_formatting))
+
+plot_freq    
 ```
 
 
@@ -178,10 +183,12 @@ carrier_stats <- rbind(transform(end_carrier_stats(end_carriers_avoid_cxc_snp),
                        transform(end_carrier_stats(end_carriers_selection_qtl),
                                  case = "Culling sires, balancing"))
 
-qplot(x = case, ymin = lower, ymax = upper, y = mean_frequency,
-      data = carrier_stats,
-      geom = "pointrange") +
-    ggtitle("Lethal frequency in generation 16-20 (5% quantile, mean, 95% quantile)")
+plot_end_freq <- qplot(x = case, ymin = lower, ymax = upper, y = mean_frequency,
+                       data = carrier_stats,
+                       geom = "pointrange") +
+  ggtitle("Lethal frequency in generation 16-20 (5% quantile, mean, 95% quantile)")
+
+plot_end_freq
 ```
 
 Mean of carrier frequency in generation 20:
@@ -266,33 +273,10 @@ print(fig1_carrier_frequency)
 dev.off()
 ```
 
+Summary of carriers in generation 20:
+
 ```{r}
 filter(carriers_combined_summary, generation == 20)
-```
-
-
-
-
-## Relationship between frequency and QTL effect (balancing selection case)
-
-
-```{r}
-# balancing_stats_avoid_cxc <- get_balancing_stats(results_avoid_cxc_qtl)
-# balancing_stats_unknown <- get_balancing_stats(results_unknown_qtl)
-# balancing_stats_selection <- get_balancing_stats(results_selection_qtl)
-# 
-# formatting_balancing <- list(xlim(0, 0.015),
-#                              ylim(0, 0.2))
-# 
-# ((balancing_stat_plot(balancing_stats_avoid_cxc) +
-#       formatting_balancing +
-#       ggtitle("Frequency and effect on breeding goal with balancing selection") ) /
-#     (balancing_stat_plot(balancing_stats_unknown) +
-#          formatting_balancing +
-#          ggtitle("With unknown lethal") ) /
-#         (balancing_stat_plot(balancing_stats_selection) +
-#              formatting_balancing +
-#              ggtitle("With culling") ))
 ```
 
 
@@ -307,13 +291,14 @@ ymax <- max(c(carriers_unknown_qtl$cases,
 formatting_affected <- list(ylim(0, ymax),
                             theme(legend.position = "none"))
 
-((affected_plot(carriers_unknown_snp) + 
-     formatting_affected +
-      ggtitle("Affected without balancing selection") ) /
-     (affected_plot(carriers_unknown_qtl) +
-          formatting_affected +
-          ggtitle("Affected with balancing selection")))
+plot_affected <- ((affected_plot(carriers_unknown_snp) + 
+                     formatting_affected +
+                     ggtitle("Affected without balancing selection") ) /
+                    (affected_plot(carriers_unknown_qtl) +
+                       formatting_affected +
+                       ggtitle("Affected with balancing selection")))
 
+plot_affected
 ```
 
 
@@ -427,7 +412,7 @@ fig2_trend <- ggplot(data = filter(genetic_trend_comparison_long,
                         colour = case),
                     size = 0.3,
                     position = position_dodge(width = 2)) +
-    ylim(-1, 8) +
+    ## ylim(-1, 8) + TO SET
     facet_wrap(~ goal) +
     formatting_fig2 +
     theme(legend.position = "right") +
@@ -487,8 +472,7 @@ fig2_carrier_frequency <- ggplot() +
 
 
 fig2 <- 
-    fig2_carrier_frequency /
-    fig2_trend
+    fig2_carrier_frequency
 
 fig2
 ```
@@ -519,7 +503,7 @@ fig_supp_g1 <- ggplot(data = filter(genetic_trend_comparison,
                         colour = case),
                     size = 0.3,
                     position = position_dodge(width = 2)) +
-    ylim(-1, 8) +
+    ## ylim(-1, 8) + TO SET
     facet_wrap(~ selection) +
     formatting_fig2 +
     theme(legend.position = "none") +
@@ -536,7 +520,7 @@ fig_supp_g2 <- ggplot(data = filter(genetic_trend_comparison,
                     size = 0.3,
                     position = position_dodge(width = 2)) +
     facet_wrap(~ selection) +
-    ylim(-1, 8) +
+    ##ylim(-1, 8) + TO SET 
     formatting_fig2 +
     theme(legend.position = "bottom") +
     ylab("Average genetic value") +
@@ -626,7 +610,7 @@ fig3_effect_g1 <- qplot(x = lethal_qtl_effect_g1,
     ggtitle("Breeding goal 1") +
     ylab("Carrier frequency among top 25%") +
     xlab("Effect of lethal on breeding goal 1") +
-    ylim(0, 0.3)
+    ## ylim(0, 0.3) TO SET
 
 fig3_effect_g2 <- qplot(x = lethal_qtl_effect_g2,
                         y = top_carrier_frequency_g2,
@@ -639,40 +623,19 @@ fig3_effect_g2 <- qplot(x = lethal_qtl_effect_g2,
   ggtitle("Breeding goal 2") +
   ylab("Carrier frequency among top 25%") +
   xlab("Effect of lethal on breeding goal 2") +
-  ylim(0, 0.3)
-
-fig3_delta <- qplot(x = delta_effect,
-                    y = delta_freq,
-                    colour = case,
-                    data = balancing_stats_combined) +
-    formatting_fig3 +
-    theme(legend.position = "bottom") +
-    geom_vline(xintercept = 0, linetype = 2) +
-    geom_hline(yintercept = 0, linetype = 2) +
-    ggtitle("Subpopulation difference") +
-    ylab("Difference in frequency") +
-    xlab("Difference in effect")
+  ## ylim(0, 0.3) TO SET
 
 fig3_freq_scatter <- qplot(x = top_carrier_frequency_g1,
                            y = top_carrier_frequency_g2,
                            colour = case,
                            data = balancing_stats_combined) +
     ggtitle("Subpopulation carrier frequency") +
-    xlab("Carrier frequency among top 25%, goal 1") +
-    ylab("Carrier frequency among top 25%, goal 2") +
-    xlim(0, 0.3) +
-    ylim(0, 0.3) +
+    xlab("Carrier frequency among top 10%, goal 1") +
+    ylab("Carrier frequency among top 10%, goal 2") +
+    ## xlim(0, 0.3) + TO SET
+    ##ylim(0, 0.3) + TO SET
     geom_abline(slope = 1, intercept = 0, linetype = 2) +
     formatting_fig3
-
-fig3_delta_histogram <- qplot(x = top_carrier_frequency_g1 - top_carrier_frequency_g2,
-                              fill = case,
-                              data = balancing_stats_combined) +
-    formatting_fig3 +
-    scale_fill_manual(values = c("#9ecae1", "#3182bd")) +
-    geom_vline(xintercept = 0, linetype = 2) +
-    theme(legend.position = "none") +
-    xlab("Difference in carrier frequency between top 25%,\n breeding goal 1 - breeding goal 2")
     
 
 fig3 <- fig3_effect_g1 + 
@@ -680,7 +643,7 @@ fig3 <- fig3_effect_g1 +
   fig3_freq_scatter +
   plot_layout(ncol = 2,
               guides = "collect") +
-  plot_annotation(tag_levels = "A") & theme(legend.position = "bottom")
+  plot_annotation(tag_levels = "a") & theme(legend.position = "bottom")
 
 fig3
 ```
@@ -695,7 +658,7 @@ fig3_alt <- (fig3_effect_g1 +
   fig3_freq_scatter +
   plot_layout(ncol = 2,
               guides = "collect") +
-  plot_annotation(tag_levels = "A") & theme(legend.position = "bottom")
+  plot_annotation(tag_levels = "a") & theme(legend.position = "bottom")
 
 
 fig3_alt
@@ -758,8 +721,8 @@ gain_generation1 <- function(stats_split) {
                                    g2 = stats_split[[i]]$mean_g2[2] - stats_split[[i]]$mean_g2[1]))
 }
 
-gain_generation1_sel <- gain_generation1(stats_split_sel)
-gain_generation1_nosel <- gain_generation1(stats_split_nosel)
+(gain_generation1_sel <- gain_generation1(stats_split_sel))
+(gain_generation1_nosel <- gain_generation1(stats_split_nosel))
                   
 ```
 

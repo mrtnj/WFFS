@@ -110,7 +110,8 @@ plot_genetic_correlation <- ggplot() +
   geom_pointrange(aes(x = generation,
                       ymin = lower,
                       y = average,
-                      ymax = upper)) +
+                      ymax = upper),
+                  data = average_genetic_correlation) +
   theme_bw() +
   theme(panel.grid = element_blank()) +
   xlab("Generation") +

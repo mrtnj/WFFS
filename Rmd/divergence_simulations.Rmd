@@ -407,6 +407,8 @@ colnames(genetic_trend_comparison_g2)[2:4] <- c("lower", "average", "upper")
 genetic_trend_comparison_long <- rbind(genetic_trend_comparison_g1,
                                        genetic_trend_comparison_g2)
 
+ymax_trend <- max(genetic_trend_comparison_long$upper)
+ymin_trend <- min(genetic_trend_comparison_long$lower)
 
 fig2_trend <- ggplot(data = filter(genetic_trend_comparison_long,
                                    selection == "no balancing selection" &
@@ -418,7 +420,7 @@ fig2_trend <- ggplot(data = filter(genetic_trend_comparison_long,
                         colour = case),
                     size = 0.3,
                     position = position_dodge(width = 2)) +
-    ## ylim(-1, 8) + TO SET
+    ylim(ymin_trend, ymax_trend) + 
     facet_wrap(~ goal) +
     formatting_fig2 +
     theme(legend.position = "right") +
@@ -512,7 +514,7 @@ fig_supp_g1 <- ggplot(data = filter(genetic_trend_comparison,
                         colour = case),
                     size = 0.3,
                     position = position_dodge(width = 2)) +
-    ## ylim(-1, 8) + TO SET
+    ylim(ymin_trend, ymax_trend) + 
     facet_wrap(~ selection) +
     formatting_fig2 +
     theme(legend.position = "none") +
@@ -529,7 +531,7 @@ fig_supp_g2 <- ggplot(data = filter(genetic_trend_comparison,
                     size = 0.3,
                     position = position_dodge(width = 2)) +
     facet_wrap(~ selection) +
-    ##ylim(-1, 8) + TO SET 
+    ylim(ymin_trend, ymax_trend) + 
     formatting_fig2 +
     theme(legend.position = "bottom") +
     ylab("Average genetic value") +
@@ -609,6 +611,12 @@ formatting_fig3 <- list(theme_bw(),
                         scale_colour_manual(values = c("#9ecae1", "#3182bd"),
                                             name = ""))
 
+max_effect <- max(c(balancing_stats_combined$lethal_qtl_effect_g1,
+                    balancing_stats_combined$lethal_qtl_effect_g2))
+max_freq <- max(c(balancing_stats_combined$top_carrier_frequency_g1,
+                  balancing_stats_combined$top_carrier_frequency_g2))
+
+
 fig3_effect_g1 <- qplot(x = lethal_qtl_effect_g1,
                         y = top_carrier_frequency_g1,
                         colour = case,
@@ -617,9 +625,9 @@ fig3_effect_g1 <- qplot(x = lethal_qtl_effect_g1,
     geom_smooth(method = lm, se = FALSE, show.legend = FALSE) +
     theme(legend.position = "none") +
     ggtitle("Breeding goal 1") +
-    ylab("Carrier frequency among top 25%") +
+    ylab("Carrier frequency among top 10%") +
     xlab("Effect of lethal on breeding goal 1") ##+
-    ## ylim(0, 0.3) TO SET
+    ylim(0, max_freq)
 
 fig3_effect_g2 <- qplot(x = lethal_qtl_effect_g2,
                         y = top_carrier_frequency_g2,
@@ -630,9 +638,9 @@ fig3_effect_g2 <- qplot(x = lethal_qtl_effect_g2,
   theme(legend.position = "none") +
   geom_vline(xintercept = 0, linetype = 2) +
   ggtitle("Breeding goal 2") +
-  ylab("Carrier frequency among top 25%") +
+  ylab("Carrier frequency among top 10%") +
   xlab("Effect of lethal on breeding goal 2") ##+
-  ## ylim(0, 0.3) TO SET
+  ylim(0, max_freq)
 
 fig3_freq_scatter <- qplot(x = top_carrier_frequency_g1,
                            y = top_carrier_frequency_g2,
@@ -641,8 +649,8 @@ fig3_freq_scatter <- qplot(x = top_carrier_frequency_g1,
     ggtitle("Subpopulation carrier frequency") +
     xlab("Carrier frequency among top 10%, goal 1") +
     ylab("Carrier frequency among top 10%, goal 2") +
-    ## xlim(0, 0.3) + TO SET
-    ##ylim(0, 0.3) + TO SET
+    xlim(0, max_freq) + 
+    ylim(0, max_freq) + 
     geom_abline(slope = 1, intercept = 0, linetype = 2) +
     formatting_fig3
     
@@ -662,8 +670,8 @@ Alternative fig 3 with same x-axis:
 ```{r}
 fig3_alt <- (fig3_effect_g1 +
                geom_vline(xintercept = 0, linetype = 2) +
-               xlim(-0.6, 0.6)) +
-  (fig3_effect_g2 + xlim(-0.6, 0.6)) +
+               xlim(-max_effect, max_effect)) +
+  (fig3_effect_g2 + xlim(-max_effect, max_effect)) +
   fig3_freq_scatter +
   plot_layout(ncol = 2,
               guides = "collect") +

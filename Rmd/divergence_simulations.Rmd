@@ -96,15 +96,25 @@ stats_selection_qtl_100exempt <- combined_stats(results_selection_qtl_100exempt)
 ### Evolution of genetic correlation
 
 ```{r}
-plot_genetic_correlation <- qplot(x = generation,
-                                  y = cor_g,
-                                  geom = "line",
-                                  group = replicate,
-                                  data = stats_avoid_cxc_snp) +
-  geom_smooth(method = lm,
-              se = FALSE) +
+average_genetic_correlation <- summarise(group_by(stats_avoid_cxc_snp, generation),
+                                         average = mean(cor_g),
+                                         upper = quantile(cor_g, 0.95),
+                                         lower = quantile(cor_g, 0.05))
+
+plot_genetic_correlation <- ggplot() +
+  geom_line(aes(x = generation,
+                y = cor_g,
+                group = replicate),
+            colour = "grey",
+            data = stats_avoid_cxc_snp) +
+  geom_pointrange(aes(x = generation,
+                      ymin = lower,
+                      y = average,
+                      ymax = upper)) +
   theme_bw() +
-  theme(panel.grid = element_blank()) 
+  theme(panel.grid = element_blank()) +
+  xlab("Generation") +
+  ylab("Genetic correlation between breeding goals")
 
 plot_genetic_correlation
 ```
@@ -625,7 +635,7 @@ fig3_effect_g1 <- qplot(x = lethal_qtl_effect_g1,
     theme(legend.position = "none") +
     ggtitle("Breeding goal 1") +
     ylab("Carrier frequency among top 10%") +
-    xlab("Effect of lethal on breeding goal 1") ##+
+    xlab("Effect of lethal on breeding goal 1") +
     ylim(0, max_freq)
 
 fig3_effect_g2 <- qplot(x = lethal_qtl_effect_g2,
@@ -638,7 +648,7 @@ fig3_effect_g2 <- qplot(x = lethal_qtl_effect_g2,
   geom_vline(xintercept = 0, linetype = 2) +
   ggtitle("Breeding goal 2") +
   ylab("Carrier frequency among top 10%") +
-  xlab("Effect of lethal on breeding goal 2") ##+
+  xlab("Effect of lethal on breeding goal 2") +
   ylim(0, max_freq)
 
 fig3_freq_scatter <- qplot(x = top_carrier_frequency_g1,

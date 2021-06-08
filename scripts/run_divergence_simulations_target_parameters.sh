@@ -10,8 +10,8 @@ for REP in {1..100}; do
         avoid_carrier_x_carrier \
         qtl \
         0 \
-        simulations/divergence_simulations/target_parameters/avoid_carrier_x_carrier_qtl/populations_$REP.Rds \
-        simulations/divergence_simulations/target_parameters/avoid_carrier_x_carrier_qtl/results_$REP.Rds 
+        simulations/divergence_simulations/target_parameters/avoid_carrier_x_carrier_qtl_populations_$REP.Rds \
+        simulations/divergence_simulations/target_parameters/avoid_carrier_x_carrier_qtl_results_$REP.Rds 
                 
 done
 

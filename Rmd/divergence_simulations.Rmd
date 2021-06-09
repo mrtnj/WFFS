@@ -760,15 +760,21 @@ ggplot() +
                 y = carrier_sires_used,
                 group = replicate),
             colour = "grey",
-            data = carriers_combined_selection) +
+            data = filter(carriers_combined_selection, case != "no carrier sires")) +
   geom_pointrange(aes(x = generation,
                       y = average,
                       ymin = lower,
                       ymax = upper),
                   data = sires_used_summary) +
-  facet_wrap(case ~ selection) +
+  facet_wrap(case ~ selection, scale = "free_y") +
   theme_bw() +
   theme(panel.grid = element_blank())
+
+summarise(group_by(filter(sires_used_summary, generation < 19), case, selection),
+          per_generation = mean(average),
+          lower = quantile(average, 0.05),
+          upper = quantile(average, 0.95))
+
 
 ```
 

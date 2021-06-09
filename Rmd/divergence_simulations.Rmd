@@ -337,6 +337,34 @@ lethal_frequency_plot(carriers_selection_snp) +
 ```
 
 
+## Number of carriers used
+
+```{r}
+sires_used_summary <- summarise(group_by(carriers_combined_selection, case, selection, generation),
+                                average = mean(carrier_sires_used),
+                                lower = quantile(carrier_sires_used, 0.05),
+                                upper = quantile(carrier_sires_used, 0.95))
+
+ggplot() +
+  geom_line(aes(x = generation,
+                y = carrier_sires_used,
+                group = replicate),
+            colour = "grey",
+            data = carriers_combined_selection) +
+  geom_pointrange(aes(x = generation,
+                      y = average,
+                      ymin = lower,
+                      ymax = upper),
+                  data = sires_used_summary) +
+  facet_wrap(case ~ selection) +
+  theme_bw() +
+  theme(panel.grid = element_blank())
+
+```
+
+
+
+
 ## Figure 2: Effect of selection against lethal
 
 ```{r}
@@ -720,8 +748,6 @@ quantile(delta_f_snp_unknown, c(0.05, 0.95))
 
 
 
-
-
 ```{r}
 pdf("figures/fig3_effect_frequency.pdf")
 print(fig3)
@@ -733,6 +759,18 @@ pdf("figures/fig3_effect_frequency_alt.pdf")
 print(fig3_alt)
 dev.off()
 ```
+
+
+### Focus in on relevant paramter region
+
+```{r}
+filter(balancing_stats_combined,
+       lethal_qtl_effect_g1 > 5 &
+         lethal_qtl_effect_g1 < 10 &
+         lethal_qtl_effect_g2 > -2 &
+         lethal_qtl_effect_g2 < 2)
+```
+
 
 
 
@@ -748,8 +786,8 @@ gain_generation1 <- function(stats_split) {
                                    g2 = stats_split[[i]]$mean_g2[2] - stats_split[[i]]$mean_g2[1]))
 }
 
-(gain_generation1_sel <- gain_generation1(stats_split_sel))
-(gain_generation1_nosel <- gain_generation1(stats_split_nosel))
+gain_generation1_sel <- gain_generation1(stats_split_sel)
+gain_generation1_nosel <- gain_generation1(stats_split_nosel)
                   
 ```
 

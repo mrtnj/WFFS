@@ -337,32 +337,6 @@ lethal_frequency_plot(carriers_selection_snp) +
 ```
 
 
-## Number of carriers used
-
-```{r}
-sires_used_summary <- summarise(group_by(carriers_combined_selection, case, selection, generation),
-                                average = mean(carrier_sires_used),
-                                lower = quantile(carrier_sires_used, 0.05),
-                                upper = quantile(carrier_sires_used, 0.95))
-
-ggplot() +
-  geom_line(aes(x = generation,
-                y = carrier_sires_used,
-                group = replicate),
-            colour = "grey",
-            data = carriers_combined_selection) +
-  geom_pointrange(aes(x = generation,
-                      y = average,
-                      ymin = lower,
-                      ymax = upper),
-                  data = sires_used_summary) +
-  facet_wrap(case ~ selection) +
-  theme_bw() +
-  theme(panel.grid = element_blank())
-
-```
-
-
 
 
 ## Figure 2: Effect of selection against lethal
@@ -771,6 +745,32 @@ filter(balancing_stats_combined,
          lethal_qtl_effect_g2 < 2)
 ```
 
+
+
+## Number of carriers used
+
+```{r}
+sires_used_summary <- summarise(group_by(carriers_combined_selection, case, selection, generation),
+                                average = mean(carrier_sires_used),
+                                lower = quantile(carrier_sires_used, 0.05),
+                                upper = quantile(carrier_sires_used, 0.95))
+
+ggplot() +
+  geom_line(aes(x = generation,
+                y = carrier_sires_used,
+                group = replicate),
+            colour = "grey",
+            data = carriers_combined_selection) +
+  geom_pointrange(aes(x = generation,
+                      y = average,
+                      ymin = lower,
+                      ymax = upper),
+                  data = sires_used_summary) +
+  facet_wrap(case ~ selection) +
+  theme_bw() +
+  theme(panel.grid = element_blank())
+
+```
 
 
 

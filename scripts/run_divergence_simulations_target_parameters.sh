@@ -6,7 +6,7 @@ fi
 
 for REP in {1..100}; do
 
-    Rscript R/divergence_simulation.R \
+    Rscript R/divergence_simulation_target_parameters.R \
         avoid_carrier_x_carrier \
         qtl \
         0 \

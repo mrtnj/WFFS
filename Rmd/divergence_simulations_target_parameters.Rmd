@@ -1,0 +1,140 @@
+---
+title: "Simulation with two breeding goals, target parameters"
+author: "Martin Johnsson"
+output: html_document
+---
+
+
+## Housekeeping
+
+Load packages and simulation results
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = normalizePath(".."))
+```
+
+```{r}
+library(AlphaSimR)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(purrr)
+library(tidyr)
+
+source("R/simulation_functions.R")
+```
+
+```{r}
+results <-
+    read_results(system("ls simulations/divergence_simulations/target_parameters/avoid_carrier_x_carrier_qtl_results_*.Rds",
+                        intern = TRUE))
+```
+
+Generation counter
+
+```{r}
+generations <- 1:20
+```
+
+
+
+## Basic features of the simulation
+
+### Genetic mean trend
+
+```{r}
+stats <- combined_stats(results)
+```
+
+
+
+### Lethal allele frequency
+
+```{r}
+carriers <- combined_carriers(results)
+
+lethal_frequency_plot(carriers)
+```
+
+
+
+## Figure 3: Relationship between effect and frequency in balancing selection
+
+```{r}
+balancing_stats <- get_balancing_stats_divergence(results)
+
+
+formatting_fig3 <- list(theme_bw(),
+                        theme(panel.grid = element_blank()),
+                        scale_colour_manual(values = c("#9ecae1", "#3182bd"),
+                                            name = ""))
+
+qplot(x = top_carrier_frequency_g1, y = top_carrier_frequency_g2, data = balancing_stats) + ylim(0, 0.2) + xlim(0, 0.2)
+
+```
+
+
+
+Delta frequency:
+
+```{r}
+delta_f <- balancing_stats$top_carrier_frequency_g1 - balancing_stats$top_carrier_frequency_g2
+mean(delta_f)
+quantile(delta_f, c(0.05, 0.95))
+```
+
+
+
+
+
+```{r}
+carriers_long <- data.frame(goal = c(rep("goal1", nrow(carriers)),
+                                     rep("goal2", nrow(carriers))),
+                            top_carrier_freq = c(carriers$top_goal1_frequency,
+                                                 carriers$top_goal2_frequency),
+                            replicate = c(carriers$replicate,
+                                          carriers$replicate),
+                            generation = c(carriers$generation,
+                                           carriers$generation))
+
+top_carrier_summary <- summarise(group_by(carriers_long, generation, goal),
+                                 average = mean(top_carrier_freq),
+                                 lower = quantile(top_carrier_freq, 0.05),
+                                 upper = quantile(top_carrier_freq, 0.95))
+
+ggplot() +
+  geom_line(aes(x = generation,
+                y = top_carrier_freq,
+                colour = goal,
+                group = paste(replicate, goal)),
+            alpha = I(0.33),
+            data = carriers_long) +
+  scale_colour_manual(values = c("grey", "black")) +
+  theme_bw() +
+  theme(panel.grid = element_blank())
+
+```
+
+```{r}
+ggplot() +
+  geom_pointrange(aes(x = generation,
+                      y = average,
+                      ymin = lower,
+                      ymax = upper,
+                      colour = goal),
+                  position = position_dodge(width = 0.5),
+                  data = top_carrier_summary) +
+  scale_colour_manual(values = c("grey", "black")) +
+  theme_bw() +
+  theme(panel.grid = element_blank())
+
+```
+
+Summary statistics
+
+```{r}
+filter(top_carrier_summary, generation == 20)
+
+```
+

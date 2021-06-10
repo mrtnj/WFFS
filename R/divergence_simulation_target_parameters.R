@@ -76,7 +76,7 @@ founder_lethal_frequency <- chosen_lethal$founder_lethal_frequency
 modified_g1 <- simparam$traits[[1]]
 modified_g2 <- simparam$traits[[2]]
 
-modified_g1@addEff[lethal_ix] <- 5
+modified_g1@addEff[lethal_ix] <- 7
 modified_g2@addEff[lethal_ix] <- 0
 
 simparam$switchTrait(traitPos = 1,

@@ -738,8 +738,8 @@ fig3_alt <- ((fig3_effect_g1 +
                 xlim(-max_effect, max_effect)) +
                (fig3_effect_g2 + xlim(-max_effect, max_effect)) +
                plot_layout(ncol = 2,
-                           guides = "collect") & theme(legend.position = "bottom")) +
-  fig3_target_parameters +
+                           guides = "collect") & theme(legend.position = "bottom")) /
+  (fig3_target_parameters + plot_layout(guides = "keep")) + 
   plot_annotation(tag_levels = "a") 
 ```
 

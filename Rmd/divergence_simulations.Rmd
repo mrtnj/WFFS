@@ -667,9 +667,11 @@ fig3_freq_scatter <- qplot(x = top_carrier_frequency_g1,
     formatting_fig3
     
 
-fig3 <- fig3_effect_g1 + 
-  fig3_effect_g2 +
-  fig3_freq_scatter +
+fig3 <- (fig3_effect_g1 +
+           geom_vline(xintercept = 0, linetype = 2) +
+           xlim(-max_effect, max_effect)) +
+  (fig3_effect_g2 + xlim(-max_effect, max_effect)) +
+  fig3_scatter + 
   plot_layout(ncol = 2,
               guides = "collect") +
   plot_annotation(tag_levels = "a") & theme(legend.position = "bottom")
@@ -677,73 +679,71 @@ fig3 <- fig3_effect_g1 +
 fig3
 ```
 
-Alternative fig 3 with same x-axis:
-
-```{r}
-fig3_alt <- (fig3_effect_g1 +
-               geom_vline(xintercept = 0, linetype = 2) +
-               xlim(-max_effect, max_effect)) +
-  (fig3_effect_g2 + xlim(-max_effect, max_effect)) +
-  fig3_freq_scatter +
-  plot_layout(ncol = 2,
-              guides = "collect") +
-  plot_annotation(tag_levels = "a") & theme(legend.position = "bottom")
-
-
-fig3_alt
-```
-
-
-Delta frequency:
-
-```{r}
-delta_f <- balancing_stats_combined$top_carrier_frequency_g1 - balancing_stats_combined$top_carrier_frequency_g2
-mean(delta_f)
-quantile(delta_f, c(0.05, 0.95))
-```
-
-Case without balancing selection:
-
-```{r}
-carriers_avoid_cxc_snp20 <- filter(carriers_avoid_cxc_snp, generation == 20)
-carriers_unknown_snp20 <- filter(carriers_unknown_snp, generation == 20)
-delta_f_snp_avoid_cxc <- carriers_avoid_cxc_snp20$top_goal1_frequency -
-    carriers_avoid_cxc_snp20$top_goal2_frequency
-delta_f_snp_unknown <- carriers_unknown_snp20$top_goal1_frequency -
-    carriers_unknown_snp20$top_goal2_frequency
-
-mean(delta_f_snp_avoid_cxc)
-quantile(delta_f_snp_avoid_cxc, c(0.05, 0.95))
-
-mean(delta_f_snp_unknown)
-quantile(delta_f_snp_unknown, c(0.05, 0.95))
-
-```
-
 
 
 ```{r}
 pdf("figures/fig3_effect_frequency.pdf")
-print(fig3)
-dev.off()
-```
-
-```{r}
-pdf("figures/fig3_effect_frequency_alt.pdf")
 print(fig3_alt)
 dev.off()
 ```
 
 
-### Focus in on relevant paramter region
+```{r}
+results_target_parameters <-
+    read_results(system("ls simulations/divergence_simulations/target_parameters/avoid_carrier_x_carrier_qtl_results_*.Rds",
+                        intern = TRUE))
+
+carriers_target_parameters <- combined_carriers(results_target_parameters)
+
+carriers_long_target_parameters <-
+  data.frame(goal = c(rep("goal1", nrow(carriers_target_parameters)),
+                      rep("goal2", nrow(carriers_target_parameters))),
+             top_carrier_freq = c(carriers_target_parameters$top_goal1_frequency,
+                                  carriers_target_parameters$top_goal2_frequency),
+             replicate = c(carriers_target_parameters$replicate,
+                           carriers_target_parameters$replicate),
+             generation = c(carriers_target_parameters$generation,
+                            carriers_target_parameters$generation))
+
+top_carrier_summary <- summarise(group_by(carriers_long_target_parameters, generation, goal),
+                                 average = mean(top_carrier_freq),
+                                 lower = quantile(top_carrier_freq, 0.05),
+                                 upper = quantile(top_carrier_freq, 0.95))
+
+top_carrier_summary$Trait <- ifelse(top_carrier_summary$goal == "goal1",
+                                    "goal 1",
+                                    "goal 2")
+
+fig3_target_parameters <- ggplot() +
+  geom_pointrange(aes(x = generation,
+                      y = average,
+                      ymin = lower,
+                      ymax = upper,
+                      colour = Trait),
+                  position = position_dodge(width = 0.5),
+                  data = top_carrier_summary) +
+  scale_colour_manual(values = c("grey", "black")) +
+  theme_bw() +
+  theme(panel.grid = element_blank()) +
+  xlab("Generation") +
+  ylab("Carrier frequency among top 10%") +
+  annotate("text", x = 4, y = 0.17, label = "Effect on goal 1 = 7\nEffect on goal 2 = 0")
+  
+fig3_target_parameters
+```
 
 ```{r}
-filter(balancing_stats_combined,
-       lethal_qtl_effect_g1 > 5 &
-         lethal_qtl_effect_g1 < 10 &
-         lethal_qtl_effect_g2 > -2 &
-         lethal_qtl_effect_g2 < 2)
+fig3_alt <- ((fig3_effect_g1 +
+                geom_vline(xintercept = 0, linetype = 2) +
+                xlim(-max_effect, max_effect)) +
+               (fig3_effect_g2 + xlim(-max_effect, max_effect)) +
+               plot_layout(ncol = 2,
+                           guides = "collect") & theme(legend.position = "bottom")) +
+  fig3_target_parameters +
+  plot_annotation(tag_levels = "a") 
 ```
+
+
 
 
 
@@ -768,7 +768,7 @@ ggplot() +
                   data = sires_used_summary) +
   facet_wrap(case ~ selection, scale = "free_y") +
   theme_bw() +
-  theme(panel.grid = element_blank())
+  theme(panel.grid = element_blank()) 
 
 summarise(group_by(filter(sires_used_summary, generation < 19), case, selection),
           per_generation = mean(average),

@@ -671,7 +671,7 @@ fig3 <- (fig3_effect_g1 +
            geom_vline(xintercept = 0, linetype = 2) +
            xlim(-max_effect, max_effect)) +
   (fig3_effect_g2 + xlim(-max_effect, max_effect)) +
-  fig3_scatter + 
+  fig3_freq_scatter + 
   plot_layout(ncol = 2,
               guides = "collect") +
   plot_annotation(tag_levels = "a") & theme(legend.position = "bottom")
@@ -683,7 +683,7 @@ fig3
 
 ```{r}
 pdf("figures/fig3_effect_frequency.pdf")
-print(fig3_alt)
+print(fig3)
 dev.off()
 ```
 
@@ -743,7 +743,11 @@ fig3_alt <- ((fig3_effect_g1 +
   plot_annotation(tag_levels = "a") 
 ```
 
-
+```{r}
+pdf("figures/fig3_effect_frequency_alt.pdf")
+print(fig3_alt)
+dev.off()
+```
 
 
 

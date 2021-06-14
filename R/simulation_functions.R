@@ -181,11 +181,21 @@ make_simulation_divergence <- function(n_ind,
                                        n_qtl,
                                        n_snp,
                                        h2,
-                                       corA) {
+                                       corA,
+                                       population_history = "generic") {
     
-    founderpop <- runMacs(nInd = n_ind,
-                          nChr = n_chr,
-                          segSites = 500)
+    if (population_history == "generic") {  
+      founderpop <- runMacs(nInd = n_ind,
+                            nChr = n_chr,
+                            segSites = 500)
+    } else if (population_history == "constant") {
+      founderpop <- runMacs2(nInd = n_ind,
+                            nChr = n_chr,
+                            Ne = 1000,
+                            histNe = NULL,
+                            histGen = NULL,
+                            segSites = 500)
+    }
     
     simparam <- SimParam$new(founderpop)
     simparam$restrSegSites(minQtlPerChr = 100,

@@ -620,7 +620,7 @@ balancing_stats_combined$delta_freq <- balancing_stats_combined$top_carrier_freq
 
 formatting_fig3 <- list(theme_bw(),
                         theme(panel.grid = element_blank()),
-                        scale_colour_manual(values = c("#9ecae1", "#3182bd"),
+                        scale_colour_manual(values = c("#3182bd", "#9ecae1"),
                                             name = ""))
 
 max_effect <- max(c(balancing_stats_combined$lethal_qtl_effect_g1,
@@ -724,7 +724,8 @@ fig3_target_parameters <- ggplot() +
                   data = top_carrier_summary) +
   scale_colour_manual(values = c("grey", "black")) +
   theme_bw() +
-  theme(panel.grid = element_blank()) +
+  theme(panel.grid = element_blank(),
+        legend.title = element_blank()) +
   xlab("Generation") +
   ylab("Carrier frequency among top 10%") +
   annotate("text", x = 4, y = 0.17, label = "Effect on goal 1 = 7\nEffect on goal 2 = 0")

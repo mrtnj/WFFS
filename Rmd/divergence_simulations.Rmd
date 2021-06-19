@@ -620,7 +620,7 @@ balancing_stats_combined$delta_freq <- balancing_stats_combined$top_carrier_freq
 
 formatting_fig3 <- list(theme_bw(),
                         theme(panel.grid = element_blank()),
-                        scale_colour_manual(values = c("#3182bd", "#9ecae1"),
+                        scale_colour_manual(values = c("#9ecae1", "#3182bd"),
                                             name = ""))
 
 max_effect <- max(c(balancing_stats_combined$lethal_qtl_effect_g1,
@@ -628,6 +628,9 @@ max_effect <- max(c(balancing_stats_combined$lethal_qtl_effect_g1,
 max_freq <- max(c(balancing_stats_combined$top_carrier_frequency_g1,
                   balancing_stats_combined$top_carrier_frequency_g2))
 
+balancing_stats_combined$case <- factor(balancing_stats_combined$case,
+                                        levels = c("no testing",
+                                                   "avoid carrier-carrier matings"))
 
 fig3_effect_g1 <- qplot(x = lethal_qtl_effect_g1,
                         y = top_carrier_frequency_g1,

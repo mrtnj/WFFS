@@ -1,0 +1,192 @@
+---
+title: "Effect of constant Ne compared to GENERIC population history"
+author: "Martin Johnsson"
+output: html_document
+---
+
+
+## Housekeeping
+
+Load packages and simulation results
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = normalizePath(".."))
+```
+
+```{r}
+library(AlphaSimR)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(purrr)
+library(tidyr)
+
+source("R/simulation_functions.R")
+```
+
+```{r}
+results_avoid_cxc_snp <-
+    read_results(system("ls simulations/divergence_simulations/avoid_carrier_x_carrier_snp/results_*.Rds",
+                        intern = TRUE))
+results_avoid_cxc_qtl <- 
+    read_results(system("ls simulations/divergence_simulations/avoid_carrier_x_carrier_qtl/results_*.Rds",
+                        intern = TRUE))
+
+results_unknown_snp <- 
+    read_results(system("ls simulations/divergence_simulations/unknown_lethal_snp/results_*.Rds",
+                        intern = TRUE))
+results_unknown_qtl <- 
+    read_results(system("ls simulations/divergence_simulations/unknown_lethal_qtl/results_*.Rds",
+                        intern = TRUE))
+
+results_avoid_cxc_snp_constant <-
+    read_results(system("ls simulations/divergence_simulations_constant_Ne/avoid_carrier_x_carrier_snp/results_*.Rds",
+                        intern = TRUE))
+results_avoid_cxc_qtl_constant <- 
+    read_results(system("ls simulations/divergence_simulations_constant_Ne/avoid_carrier_x_carrier_qtl/results_*.Rds",
+                        intern = TRUE))
+
+results_unknown_snp_constant <- 
+    read_results(system("ls simulations/divergence_simulations_constant_Ne/unknown_lethal_snp/results_*.Rds",
+                        intern = TRUE))
+results_unknown_qtl_constant <- 
+    read_results(system("ls simulations/divergence_simulations_constant_Ne/unknown_lethal_qtl/results_*.Rds",
+                        intern = TRUE))
+
+
+```
+
+Generation counter
+
+```{r}
+generations <- 1:20
+```
+
+
+
+Carrier frequencies
+
+```{r}
+carriers_avoid_cxc_snp <- combined_carriers(results_avoid_cxc_snp)
+carriers_avoid_cxc_qtl <- combined_carriers(results_avoid_cxc_qtl)
+
+carriers_unknown_snp <- combined_carriers(results_unknown_snp)
+carriers_unknown_qtl <- combined_carriers(results_unknown_qtl)
+
+carriers_avoid_cxc_snp_constant <- combined_carriers(results_avoid_cxc_snp_constant)
+carriers_avoid_cxc_qtl_constant <- combined_carriers(results_avoid_cxc_qtl_constant)
+
+carriers_unknown_snp_constant <- combined_carriers(results_unknown_snp_constant)
+carriers_unknown_qtl_constant <- combined_carriers(results_unknown_qtl_constant)
+```
+
+
+
+Mean of carrier frequency in generation 20:
+
+```{r}
+mean(filter(carriers_avoid_cxc_snp, generation == 20)$carriers/6000)
+mean(filter(carriers_avoid_cxc_snp_constant, generation == 20)$carriers/6000)
+mean(filter(carriers_avoid_cxc_qtl, generation == 20)$carriers/6000)
+mean(filter(carriers_avoid_cxc_qtl_constant, generation == 20)$carriers/6000)
+
+mean(filter(carriers_unknown_snp, generation == 20)$carriers/6000)
+mean(filter(carriers_unknown_snp_constant, generation == 20)$carriers/6000)
+mean(filter(carriers_unknown_qtl_constant, generation == 20)$carriers/6000)
+```
+
+
+Standard deviation of carrier frequency in generation 20:
+
+```{r}
+sd(filter(carriers_avoid_cxc_snp, generation == 20)$carriers/6000)
+sd(filter(carriers_avoid_cxc_snp_constant, generation == 20)$carriers/6000)
+sd(filter(carriers_avoid_cxc_qtl, generation == 20)$carriers/6000)
+sd(filter(carriers_avoid_cxc_qtl_constant, generation == 20)$carriers/6000)
+
+sd(filter(carriers_unknown_snp, generation == 20)$carriers/6000)
+sd(filter(carriers_unknown_snp_constant, generation == 20)$carriers/6000)
+sd(filter(carriers_unknown_qtl, generation == 20)$carriers/6000)
+sd(filter(carriers_unknown_qtl_constant, generation == 20)$carriers/6000)
+```
+
+
+
+## Simulation figure 1: Lethal allele frequency for (un)known lethal
+
+with and without balancing selection
+
+```{r}
+carriers_combined <- rbind(transform(carriers_avoid_cxc_snp,
+                                     case = "avoid carrier-carrier matings",
+                                     selection = "no balancing selection",
+                                     population_history = "GENERIC"),
+                           transform(carriers_avoid_cxc_qtl,
+                                     case = "avoid carrier-carrier matings",
+                                     selection = "balancing selection",
+                                     population_history = "GENERIC"),
+                           transform(carriers_unknown_snp,
+                                     case = "no testing",
+                                     selection = "no balancing selection",
+                                     population_history = "GENERIC"),
+                           transform(carriers_unknown_qtl,
+                                     case = "no testing",
+                                     selection = "balancing selection",
+                                     population_history = "GENERIC"),
+                           transform(carriers_avoid_cxc_snp_constant,
+                                     case = "avoid carrier-carrier matings",
+                                     selection = "no balancing selection",
+                                     population_history = "constant Ne"),
+                           transform(carriers_avoid_cxc_qtl_constant,
+                                     case = "avoid carrier-carrier matings",
+                                     selection = "balancing selection",
+                                     population_history = "constant Ne"),
+                           transform(carriers_unknown_snp_constant,
+                                     case = "no testing",
+                                     selection = "no balancing selection",
+                                     population_history = "constant Ne"),
+                           transform(carriers_unknown_qtl_constant,
+                                     case = "no testing",
+                                     selection = "balancing selection",
+                                     population_history = "constant Ne"))
+
+carriers_combined_summary <- summarise(group_by(carriers_combined,
+                                                generation, case, selection, population_history),
+                                       average = mean(carriers/n),
+                                       lower = quantile(carriers/n, 0.05),
+                                       upper = quantile(carriers/n, 0.95))
+
+fig1_carrier_frequency <- ggplot() +
+    geom_line(aes(x = generation,
+                  y = carriers/n,
+                  group = paste(replicate, case, selection, population_history)),
+              colour = "grey",
+              data = carriers_combined) +
+    geom_pointrange(aes(x = generation,
+                        y = average,
+                        ymin = lower,
+                        ymax = upper),
+                    data = carriers_combined_summary) +
+    theme_bw() +
+    theme(panel.grid = element_blank(),
+          strip.background = element_blank()) +
+    facet_grid(case ~ selection + population_history) +
+    ggtitle("Carrier frequency with and without balancing selection") +
+    ylab("Carrier frequency") +
+    xlab("Generations")
+
+fig1_carrier_frequency
+```
+
+```{r}
+pdf("figures/suppl_fig_population_history.pdf")
+print(fig1_carrier_frequency)
+dev.off()
+```
+
+Summary of carriers in generation 20:
+
+```{r}
+filter(carriers_combined_summary, generation == 20)
+```

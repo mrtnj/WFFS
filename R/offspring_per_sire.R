@@ -4,6 +4,7 @@
 
 library(countreg)
 library(dplyr)
+library(ggplot2)
 library(MASS)
 library(readr)
 library(purrr)
@@ -100,3 +101,20 @@ offspring_g2 <- get_offspring_distribution(300 * 0.6,
                                            6000 * 0.6)
 
 
+## Supplementary plot of offspring distribution
+
+plot_distribution <- qplot(x = 1:10,
+                           y = offspring_per_sire_window,
+                           label = offspring_per_sire_window,
+                           geom = "text") +
+    scale_x_continuous(breaks = 1:10) +
+    theme_bw() +
+    theme(panel.grid = element_blank()) +
+    ylab("Offspring per sire") +
+    xlab("Decile of sires") +
+    ggtitle("Distribution of offspring used in simulation")
+
+
+pdf("figures/suppl_offspring_distribution.pdf")
+print(plot_distribution)
+dev.off()

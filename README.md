@@ -6,6 +6,7 @@ This repository contains simulation code for the paper:
 
 Ablondi M, Johnsson M, Eriksson S, Sabbioni A, Gelinder Viklund Å, Mikko S. (2022)
 Performance of Swedish Warmblood fragile foal syndrome carriers and breeding prospects.
+Genetics Selection Evolution https://gsejournal.biomedcentral.com/articles/10.1186/s12711-021-00693-4
 
 
 ## Contents
